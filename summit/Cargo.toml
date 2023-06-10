@@ -1,0 +1,27 @@
+[package]
+name = "summit"
+version = "0.0.1"
+authors = ["Lee Olayvar <leegit@fastmail.com>"]
+edition = "2021"
+license-file = "LICENSE"
+
+[[bin]]
+name = "summit"
+path = "src/bin/summit.rs"
+
+[lib]
+name = "summit"
+path = "src/lib.rs"
+
+[dependencies]
+tokio = { workspace = true, features = ["test-util", "rt-multi-thread"] }
+tower.workspace = true
+tracing.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+sqlx = { version = "0.7.0-alpha", features = ["sqlite", "chrono", "runtime-tokio"] }
+# TODO: Bin only. Waiting on some RFCs/Issues before we make them optional.
+# - https://github.com/rust-lang/cargo/issues/1982
+# - https://github.com/rust-lang/rfcs/pull/3374
+clap = { version = "4.3", features = ["derive"] }
+tracing-subscriber = { version = "0.3", features = ["parking_lot", "env-filter"] }
