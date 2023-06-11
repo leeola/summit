@@ -14,14 +14,17 @@ name = "summit"
 path = "src/lib.rs"
 
 [dependencies]
-tokio = { workspace = true, features = ["test-util", "rt-multi-thread"] }
-tower.workspace = true
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "signal"] }
+hyper = "0.14"
 tracing.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
+axum = { version = "0.6", features = ["tracing"] }
 sqlx = { version = "0.7.0-alpha", features = ["sqlite", "chrono", "runtime-tokio"] }
+sailfish = "0.6"
+
 # TODO: Bin only. Waiting on some RFCs/Issues before we make them optional.
 # - https://github.com/rust-lang/cargo/issues/1982
 # - https://github.com/rust-lang/rfcs/pull/3374
-clap = { version = "4.3", features = ["derive"] }
+clap = { version = "4.3", features = ["derive", "env"] }
 tracing-subscriber = { version = "0.3", features = ["parking_lot", "env-filter"] }

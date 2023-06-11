@@ -1,7 +1,10 @@
-use tracing::{info, metadata::LevelFilter, subscriber};
+use clap::Parser;
+use summit::http::ServeConfig;
+use tracing::{metadata::LevelFilter, subscriber};
 use tracing_subscriber::EnvFilter;
 
-fn main() {
+#[tokio::main]
+async fn main() -> Result<(), hyper::Error> {
     // TODO: Move logging init to a core utility, for ease of test setup.
     subscriber::set_global_default(
         tracing_subscriber::FmtSubscriber::builder()
@@ -15,5 +18,6 @@ fn main() {
     )
     .unwrap();
 
-    info!("init")
+    let config = ServeConfig::parse();
+    summit::serve(config).await
 }
