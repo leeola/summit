@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <% include!("head.stpl"); %>
+  </head>
+  <body>
+    <% include!("header.stpl"); %>
+    <% for post in posts.iter() { %>
+      <article>
+        <h2><%= post.title %></h2>
+        <p>Posted on Foo.Bar.2017</p>
+      </article>
+    <% } %>
+  </body>
+</html>
