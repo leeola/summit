@@ -1,3 +1,6 @@
+use std::sync::Arc;
+
+use crate::db::Db;
 use axum::{routing::get, Router};
 use clap::Parser;
 use http::Request;
@@ -10,7 +13,6 @@ mod graceful_shutdown;
 pub mod handler;
 
 #[derive(Parser, Debug, Default)]
-#[command(author, version, about, long_about = None)]
 pub struct ServeConfig {
     #[arg(long, default_value = "127.0.0.1")]
     pub host: String,
@@ -18,10 +20,10 @@ pub struct ServeConfig {
     pub port: u16,
 }
 
-pub async fn serve(config: ServeConfig) -> Result<(), hyper::Error> {
+pub async fn serve(config: ServeConfig, db: Arc<dyn Db>) -> Result<(), hyper::Error> {
     let app = Router::new()
-        .route("/", get(root))
         .route("/c/", get(handler::community::handler))
+        .with_state(db)
         .layer(
             // Let's create a tracing span for each request
             TraceLayer::new_for_http().make_span_with(|request: &Request<Body>| {
@@ -51,9 +53,4 @@ pub async fn serve(config: ServeConfig) -> Result<(), hyper::Error> {
         .serve(app.into_make_service())
         .with_graceful_shutdown(graceful_shutdown::shutdown_signal())
         .await
-}
-
-async fn root() -> &'static str {
-    info!("hello");
-    "Hello, World!"
 }

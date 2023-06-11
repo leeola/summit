@@ -1,7 +1,16 @@
 use clap::Parser;
-use summit::http::ServeConfig;
+use summit::{db::DbConfig, http::ServeConfig};
 use tracing::{metadata::LevelFilter, subscriber};
 use tracing_subscriber::EnvFilter;
+
+#[derive(Parser, Debug, Default)]
+#[command(author, version, about, long_about = None)]
+pub struct CliConfig {
+    #[command(flatten)]
+    pub db: DbConfig,
+    #[command(flatten)]
+    pub serve: ServeConfig,
+}
 
 #[tokio::main]
 async fn main() -> Result<(), hyper::Error> {
@@ -18,6 +27,7 @@ async fn main() -> Result<(), hyper::Error> {
     )
     .unwrap();
 
-    let config = ServeConfig::parse();
-    summit::serve(config).await
+    let config = CliConfig::parse();
+    let db = config.db.init();
+    summit::serve(config.serve, db).await
 }

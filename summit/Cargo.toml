@@ -13,6 +13,10 @@ path = "src/bin/summit.rs"
 name = "summit"
 path = "src/lib.rs"
 
+[features]
+default = ["dev"]
+dev = ["dep:fake"]
+
 [dependencies]
 tokio = { workspace = true, features = ["rt-multi-thread", "macros", "signal"] }
 hyper = "0.14"
@@ -25,6 +29,9 @@ http = "0.2"
 sqlx = { version = "0.7.0-alpha", features = ["sqlite", "chrono", "runtime-tokio"] }
 sailfish = "0.6"
 tower-request-id = "0.2"
+kanal = "0.1.0-pre8"
+fake = { version = "2.6", optional = true }
+async-trait.workspace = true
 
 # TODO: Bin only. Waiting on some RFCs/Issues before we make them optional.
 # - https://github.com/rust-lang/cargo/issues/1982
