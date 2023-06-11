@@ -20,8 +20,11 @@ tracing.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
 axum = { version = "0.6", features = ["tracing"] }
+tower-http = { version = "0.4.0", features = ["trace"] }
+http = "0.2"
 sqlx = { version = "0.7.0-alpha", features = ["sqlite", "chrono", "runtime-tokio"] }
 sailfish = "0.6"
+tower-request-id = "0.2"
 
 # TODO: Bin only. Waiting on some RFCs/Issues before we make them optional.
 # - https://github.com/rust-lang/cargo/issues/1982
