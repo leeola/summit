@@ -1,5 +1,5 @@
 use crate::{db::Post, server::Summit};
-use axum::extract::State;
+use axum::{extract::State, response::Html};
 use sailfish::TemplateOnce;
 use std::sync::Arc;
 use tracing::info;
@@ -11,7 +11,7 @@ pub struct Template {
     pub posts: Vec<Post>,
 }
 
-pub async fn handler(State(summit): State<Arc<Summit>>) -> String {
+pub async fn handler(State(summit): State<Arc<Summit>>) -> Html<String> {
     info!("community");
 
     let posts = summit.posts().await.unwrap();
@@ -20,5 +20,5 @@ pub async fn handler(State(summit): State<Arc<Summit>>) -> String {
         posts,
     };
 
-    ctx.render_once().unwrap()
+    Html(ctx.render_once().unwrap())
 }
