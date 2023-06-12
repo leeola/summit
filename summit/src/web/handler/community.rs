@@ -1,8 +1,7 @@
-use std::sync::Arc;
-
-use crate::db::{Db, Post};
+use crate::{db::Post, server::Summit};
 use axum::extract::State;
 use sailfish::TemplateOnce;
+use std::sync::Arc;
 use tracing::info;
 
 #[derive(TemplateOnce)]
@@ -12,10 +11,10 @@ pub struct Template {
     pub posts: Vec<Post>,
 }
 
-pub async fn handler(State(db): State<Arc<dyn Db>>) -> String {
+pub async fn handler(State(summit): State<Arc<Summit>>) -> String {
     info!("community");
 
-    let posts = db.posts().await.unwrap();
+    let posts = summit.posts().await.unwrap();
     let ctx = Template {
         title: "Some Title".into(),
         posts,

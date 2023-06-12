@@ -1,5 +1,7 @@
+use std::sync::Arc;
+
 use clap::Parser;
-use summit::{db::DbConfig, http::ServeConfig};
+use summit::{db::DbConfig, server::Summit, web::ServeConfig};
 use tracing::{metadata::LevelFilter, subscriber};
 use tracing_subscriber::EnvFilter;
 
@@ -10,6 +12,9 @@ pub struct CliConfig {
     pub db: DbConfig,
     #[command(flatten)]
     pub serve: ServeConfig,
+    #[cfg(any(test, feature = "dev"))]
+    #[command(flatten)]
+    pub fake: summit::dev::fake::user::FakeUserInitConfig,
 }
 
 #[tokio::main]
@@ -28,6 +33,13 @@ async fn main() -> Result<(), hyper::Error> {
     .unwrap();
 
     let config = CliConfig::parse();
-    let db = config.db.init();
-    summit::serve(config.serve, db).await
+    let summit = Arc::new(Summit::new(config.db.init()));
+    #[cfg(any(test, feature = "dev"))]
+    {
+        tracing::info!("running with dev");
+        let fake = config.fake.init(Arc::clone(&summit)).await;
+        summit::web::serve(config.serve, summit, fake).await
+    }
+    #[cfg(not(any(test, feature = "dev")))]
+    summit::web::serve(config.serve, summit).await
 }

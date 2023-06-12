@@ -1,10 +1,9 @@
-use std::sync::Arc;
-
-use crate::db::Db;
+use crate::server::Summit;
 use axum::{routing::get, Router};
 use clap::Parser;
 use http::Request;
 use hyper::Body;
+use std::sync::Arc;
 use tower_http::trace::TraceLayer;
 use tower_request_id::{RequestId, RequestIdLayer};
 use tracing::{error_span, info};
@@ -20,10 +19,19 @@ pub struct ServeConfig {
     pub port: u16,
 }
 
-pub async fn serve(config: ServeConfig, db: Arc<dyn Db>) -> Result<(), hyper::Error> {
+pub async fn serve(
+    config: ServeConfig,
+    summit: Arc<Summit>,
+    // TODO: Probably worth it to make a server instance and include `with_fake()` to modify the
+    // router, avoiding this nonsense.
+    #[cfg(any(test, feature = "dev"))] fake: Arc<crate::dev::fake::user::FakeUsers>,
+) -> Result<(), hyper::Error> {
     let app = Router::new()
         .route("/c/", get(handler::community::handler))
-        .with_state(db)
+        .with_state(summit);
+    #[cfg(any(test, feature = "dev"))]
+    let app = app.with_state(fake);
+    let app = app
         .layer(
             // Let's create a tracing span for each request
             TraceLayer::new_for_http().make_span_with(|request: &Request<Body>| {
