@@ -12,4 +12,5 @@
       </article>
     <% } %>
   </body>
+  <% include!("foot.stpl"); %>
 </html>
