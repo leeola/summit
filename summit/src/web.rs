@@ -9,6 +9,7 @@ use tracing::{error_span, info};
 
 mod graceful_shutdown;
 pub mod handler;
+pub mod template;
 
 #[derive(Parser, Debug, Default)]
 pub struct ServeConfig {
