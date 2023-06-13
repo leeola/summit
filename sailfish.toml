@@ -1,4 +1,4 @@
-template_dirs = ["templates"]
+template_dirs = ["${TEMPLATES_ROOT_DIR}/templates"]
 
 [optimizations]
 rm_whitespace = false
