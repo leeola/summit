@@ -45,7 +45,7 @@ fn minify_templates() {
         println!("cargo:rerun-if-changed={}", src_path.to_string_lossy());
 
         let rel_path = src_path.strip_prefix(&src_templates_dir).unwrap();
-        let dst_path = dst_templates_dir.join(&rel_path);
+        let dst_path = dst_templates_dir.join(rel_path);
         let dst_path_parent = dst_path
             .parent()
             .expect("parent unexpectedly did not exist in Path");
