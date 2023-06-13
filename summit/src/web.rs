@@ -1,7 +1,6 @@
 use crate::server::Summit;
-use axum::{routing::get, Router};
+use axum::{http::Request, routing::get, Router};
 use clap::Parser;
-use http::Request;
 use hyper::Body;
 use std::sync::Arc;
 use tower_http::trace::TraceLayer;
@@ -28,6 +27,7 @@ pub async fn serve(
 ) -> Result<(), hyper::Error> {
     let app = Router::new()
         .route("/c/", get(handler::community::handler))
+        .route("/static/*key", get(handler::static_assets::serve_asset))
         .with_state(summit);
     #[cfg(any(test, feature = "dev"))]
     let app = app.with_state(fake);

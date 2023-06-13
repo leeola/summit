@@ -23,9 +23,9 @@ hyper = "0.14"
 tracing.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
-axum = { version = "0.6", features = ["tracing"] }
+axum = { version = "0.6", features = ["tracing", "headers"] }
+mime = "0.3"
 tower-http = { version = "0.4.0", features = ["trace"] }
-http = "0.2"
 sqlx = { version = "0.7.0-alpha", features = ["sqlite", "chrono", "runtime-tokio"] }
 sailfish = "0.6"
 tower-request-id = "0.2"
