@@ -28,6 +28,7 @@ pub async fn serve(
 ) -> Result<(), hyper::Error> {
     let app = Router::new()
         .route("/c/", get(handler::community::handler))
+        .route("/live", get(handler::live::live_handler))
         .route("/static/*key", get(handler::static_assets::serve_asset))
         .with_state(summit);
     #[cfg(any(test, feature = "dev"))]

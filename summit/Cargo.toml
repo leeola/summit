@@ -32,6 +32,8 @@ tower-request-id = "0.2"
 kanal = "0.1.0-pre8"
 fake = { version = "2.6", optional = true }
 async-trait.workspace = true
+tokio-stream = "0.1"
+futures = "0.3"
 
 # TODO: Bin only. Waiting on some RFCs/Issues before we make them optional.
 # - https://github.com/rust-lang/cargo/issues/1982
