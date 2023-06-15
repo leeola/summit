@@ -1,4 +1,4 @@
-use crate::server::Summit;
+use crate::{server::Summit, web::graceful_shutdown::GracefulShutdown};
 use axum::{http::Request, routing::get, Router};
 use clap::Parser;
 use hyper::Body;
@@ -26,9 +26,13 @@ pub async fn serve(
     // router, avoiding this nonsense.
     #[cfg(any(test, feature = "dev"))] fake: Arc<crate::dev::fake::user::FakeUsers>,
 ) -> Result<(), hyper::Error> {
+    let (receiver, signal) = GracefulShutdown::new();
     let app = Router::new()
         .route("/c/", get(handler::community::handler))
-        .route("/live", get(handler::live::live_handler))
+        .route(
+            "/live",
+            get(handler::live::live_handler).with_state(receiver),
+        )
         .route("/static/*key", get(handler::static_assets::serve_asset))
         .with_state(summit);
     #[cfg(any(test, feature = "dev"))]
@@ -61,6 +65,6 @@ pub async fn serve(
     info!(listen_addr, "starting server..");
     axum::Server::bind(&listen_addr.parse().unwrap())
         .serve(app.into_make_service())
-        .with_graceful_shutdown(graceful_shutdown::shutdown_signal())
+        .with_graceful_shutdown(signal)
         .await
 }

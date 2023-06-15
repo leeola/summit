@@ -1,6 +1,16 @@
+use futures::Future;
+use kanal::{AsyncReceiver, AsyncSender};
 use tokio::signal;
 
-pub async fn shutdown_signal() {
+#[derive(Clone)]
+pub struct GracefulShutdown(pub AsyncReceiver<()>);
+impl GracefulShutdown {
+    pub fn new() -> (Self, impl Future<Output = ()>) {
+        let (snd, rcv) = kanal::bounded_async::<()>(2);
+        (Self(rcv), shutdown_signal(snd))
+    }
+}
+async fn shutdown_signal(sender: AsyncSender<()>) {
     let ctrl_c = async {
         signal::ctrl_c()
             .await
@@ -20,4 +30,6 @@ pub async fn shutdown_signal() {
         _ = terminate => {},
     }
     println!("signal received, starting graceful shutdown");
+    tokio::spawn(async move { sender.send(()).await });
+    println!("signal sent, actually starting graceful shutdown");
 }
