@@ -1,5 +1,5 @@
 use axum::{extract::Path, headers::ContentType, http::StatusCode, TypedHeader};
-use mime::TEXT_JAVASCRIPT;
+use mime::{TEXT_CSS, TEXT_JAVASCRIPT};
 use std::{
     collections::HashMap,
     ops::{Deref, DerefMut},
@@ -42,6 +42,13 @@ struct StaticAssets(HashMap<&'static str, (ContentType, &'static [u8])>);
 impl StaticAssets {
     pub fn new() -> Self {
         let mut assets = Self(Default::default());
+        assets.insert(
+            "style.css",
+            (
+                ContentType::from(TEXT_CSS),
+                include_bytes!("../../../static/style.css"),
+            ),
+        );
         insert_vendor_asset!(
             assets,
             ContentType::from(TEXT_JAVASCRIPT),

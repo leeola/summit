@@ -1,0 +1,19 @@
+<header>
+	<h1>Site Name</h1>
+	<nav>
+		<ul>
+			<li>Home</li>
+			<li>Foo</li>
+			<li>Bar</li>
+		</ul>
+	</nav>
+	<nav>
+		<ul>
+			<li>Register</li>
+			<li>Login</li>
+			<li>Me</li>
+			<li>Settings</li>
+			<li>Logout</li>
+		</ul>
+	</nav>
+</header>

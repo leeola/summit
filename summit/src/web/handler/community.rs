@@ -5,7 +5,7 @@ use std::sync::Arc;
 use tracing::info;
 
 #[derive(TemplateOnce)]
-#[template(path = "community.stpl")]
+#[template(path = "page/community.stpl")]
 pub struct Community {
     pub title: String,
     pub posts: Vec<Post>,
