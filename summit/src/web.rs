@@ -1,4 +1,4 @@
-use crate::{server::Summit, web::graceful_shutdown::GracefulShutdown};
+use crate::{server::Summit, web::shutdown::ShutdownSignal};
 use axum::{http::Request, routing::get, Router};
 use clap::Parser;
 use hyper::Body;
@@ -7,8 +7,8 @@ use tower_http::trace::TraceLayer;
 use tower_request_id::{RequestId, RequestIdLayer};
 use tracing::{error_span, info};
 
-mod graceful_shutdown;
 pub mod handler;
+mod shutdown;
 pub mod template;
 
 #[derive(Parser, Debug, Default)]
@@ -26,12 +26,12 @@ pub async fn serve(
     // router, avoiding this nonsense.
     #[cfg(any(test, feature = "dev"))] fake: Arc<crate::dev::fake::user::FakeUsers>,
 ) -> Result<(), hyper::Error> {
-    let (receiver, signal) = GracefulShutdown::new();
+    let shutdown_signal = ShutdownSignal::new().await;
     let app = Router::new()
         .route("/c/", get(handler::community::handler))
         .route(
             "/live",
-            get(handler::live::live_handler).with_state(receiver),
+            get(handler::live::live_handler).with_state(shutdown_signal.clone()),
         )
         .route("/static/*key", get(handler::static_assets::serve_asset))
         .with_state(summit);
@@ -65,6 +65,6 @@ pub async fn serve(
     info!(listen_addr, "starting server..");
     axum::Server::bind(&listen_addr.parse().unwrap())
         .serve(app.into_make_service())
-        .with_graceful_shutdown(signal)
+        .with_graceful_shutdown(async move { shutdown_signal.recv().await })
         .await
 }
