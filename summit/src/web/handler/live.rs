@@ -42,9 +42,9 @@ pub async fn live_handler(
     )
 }
 /// A guard to report when a SSE Stream has closed, and and metadata we attach to that stream.
-struct ConnectionGuard {
-    span: Span,
-    closed_via_shutdown_signal: bool,
+pub(super) struct ConnectionGuard {
+    pub span: Span,
+    pub closed_via_shutdown_signal: bool,
 }
 impl Drop for ConnectionGuard {
     fn drop(&mut self) {

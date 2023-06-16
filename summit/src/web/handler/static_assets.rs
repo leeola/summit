@@ -49,6 +49,13 @@ impl StaticAssets {
                 include_bytes!("../../../static/style.css"),
             ),
         );
+        assets.insert(
+            "dev_restart.js",
+            (
+                ContentType::from(TEXT_JAVASCRIPT),
+                include_bytes!("../../../static/dev_restart.js"),
+            ),
+        );
         insert_vendor_asset!(
             assets,
             ContentType::from(TEXT_JAVASCRIPT),
