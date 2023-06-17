@@ -32,7 +32,7 @@ macro_rules! insert_vendor_asset {
             $vendor_path,
             (
                 $content_type,
-                include_bytes!(concat!("../../../../vendor/", $vendor_path)),
+                include_bytes!(concat!(env!("VENDOR_DIR"), "/", $vendor_path)),
             ),
         );
     };
@@ -46,7 +46,7 @@ impl StaticAssets {
             "style.css",
             (
                 ContentType::from(TEXT_CSS),
-                include_bytes!("../../../static/style.css"),
+                include_bytes!(concat!(env!("CSS_DIR"), "/style.css")),
             ),
         );
         #[cfg(feature = "local_dev")]
@@ -54,7 +54,7 @@ impl StaticAssets {
             "dev_restart.js",
             (
                 ContentType::from(TEXT_JAVASCRIPT),
-                include_bytes!("../../../static/dev_restart.js"),
+                include_bytes!(concat!(env!("STATIC_DIR"), "/dev_restart.js")),
             ),
         );
         insert_vendor_asset!(

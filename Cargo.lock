@@ -1913,6 +1913,7 @@ dependencies = [
  "async-trait",
  "axum",
  "clap",
+ "css-minify",
  "fake",
  "futures",
  "hyper",
