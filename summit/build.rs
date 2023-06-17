@@ -1,10 +1,6 @@
 use anyhow::{anyhow, Error, Result};
-use html_minifier::HTMLMinifierHelper;
 use std::{
-    env,
-    fs::{self, File},
-    io::Read,
-    iter,
+    env, fs, iter,
     path::{Path, PathBuf},
 };
 
@@ -131,25 +127,25 @@ struct SrcOutPaths {
     pub src: PathBuf,
     pub out: PathBuf,
 }
-fn minify_templates(_debug: bool, config: &BuildConfig) -> Result<()> {
+fn minify_templates(debug: bool, config: &BuildConfig) -> Result<()> {
+    let minify_cfg = minify_html::Cfg {
+        ..minify_html::Cfg::new()
+    };
     for res in config.list_templates() {
-        let SrcOutPaths { src, out } = res?;
-        // log_with_debug(debug, format!(""));
-        let out_parent = out
+        let SrcOutPaths {
+            src: src_path,
+            out: out_path,
+        } = res?;
+        log_with_debug(debug, format!("minifying: {}", src_path.to_string_lossy()));
+        let out_parent = out_path
             .parent()
-            .ok_or_else(|| anyhow!("parent did not exist for: {}", out.to_string_lossy()))?;
+            .ok_or_else(|| anyhow!("parent did not exist for: {}", out_path.to_string_lossy()))?;
         fs::create_dir_all(out_parent).expect("failed to create parent dir to template dst");
-        let mut input_file = File::open(src)?;
-        let mut output_file = File::create(out)?;
-        let mut buffer = [0u8; 256];
-        let mut html_minifier_helper = HTMLMinifierHelper::new();
-        loop {
-            let c = input_file.read(&mut buffer)?;
-            if c == 0 {
-                break;
-            }
-            html_minifier_helper.digest(&buffer[..c], &mut output_file)?;
-        }
+        let minified_buf = {
+            let src = fs::read_to_string(src_path)?;
+            minify_html::minify(src.as_bytes(), &minify_cfg)
+        };
+        fs::write(out_path, minified_buf)?;
     }
     Ok(())
 }

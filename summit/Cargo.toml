@@ -44,4 +44,4 @@ tracing-subscriber = { version = "0.3", features = ["parking_lot", "env-filter"]
 
 [build-dependencies]
 anyhow.workspace = true
-html-minifier = "4.0"
+minify-html = "0.11"

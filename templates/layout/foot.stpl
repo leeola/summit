@@ -1,7 +1,10 @@
 	</body>
 	<script src="/static/htmx-1.9.2/htmx.min.js"></script><%- {
-		// Odd syntax, but returning the conditionally flagged values directly was causing issues
-		// and for some reason wrapping them in sub-expressions worked.. /shrug.
+		/* Odd syntax, but returning the conditionally flagged values directly was causing issues
+		   and for some reason wrapping them in sub-expressions worked.. /shrug.
+		
+			.. also i changed to comment block due to:
+			https://github.com/wilsonzlin/minify-html/issues/52#issuecomment-1595850329 */
 		#[cfg(feature = "local_dev")]
 		{ "\n		<script src=\"/static/dev_restart.js\"></script>" }
 		#[cfg(not(feature = "local_dev"))]
