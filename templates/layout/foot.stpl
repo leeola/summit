@@ -1,3 +1,10 @@
 	</body>
-	<script src="/static/htmx-1.9.2/htmx.min.js"></script>
+	<script src="/static/htmx-1.9.2/htmx.min.js"></script><%- {
+		// Odd syntax, but returning the conditionally flagged values directly was causing issues
+		// and for some reason wrapping them in sub-expressions worked.. /shrug.
+		#[cfg(feature = "local_dev")]
+		{ "\n		<script src=\"/static/dev_restart.js\"></script>" }
+		#[cfg(not(feature = "local_dev"))]
+		{ "" }
+	} %>
 </html>

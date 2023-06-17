@@ -49,6 +49,7 @@ impl StaticAssets {
                 include_bytes!("../../../static/style.css"),
             ),
         );
+        #[cfg(feature = "local_dev")]
         assets.insert(
             "dev_restart.js",
             (

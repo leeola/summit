@@ -34,11 +34,12 @@ pub async fn serve(
             get(handler::live::live_handler).with_state(shutdown_signal.clone()),
         )
         .route("/static/*key", get(handler::static_assets::serve_asset))
-        .route(
-            "/dev/watch-restart",
-            get(handler::dev::restart::restart_handler).with_state(shutdown_signal.clone()),
-        )
         .with_state(summit);
+    #[cfg(feature = "local_dev")]
+    let app = app.route(
+        "/dev/watch-restart",
+        get(handler::dev::restart::restart_handler).with_state(shutdown_signal.clone()),
+    );
     #[cfg(any(test, feature = "dev"))]
     let app = app.with_state(fake);
     let app = app
