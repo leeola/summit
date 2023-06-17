@@ -1,4 +1,5 @@
-template_dirs = ["${TEMPLATES_ROOT_DIR}/templates"]
+# TEMPLATES_DIR typically defined by `summit/build.rs`
+template_dirs = ["${TEMPLATES_DIR}"]
 
 [optimizations]
 rm_whitespace = false
