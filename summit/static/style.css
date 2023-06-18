@@ -1,16 +1,75 @@
-/* Starting with some basic CSS from Bettermotherfuckingwebsite */
+/* ============================ */
+/* ========== LAYOUT ========== */
+/* ============================ */
+
 body {
 	margin: 40px auto;
 	max-width: 650px;
 	line-height: 1.6;
 	font-size: 18px;
-	/* TODO: Add a dark/light toggle.
-		color: #444;
-	 */
-	background-color: #222;
-	color: #eee;
-	padding: 0 10px
+	padding: 0 10px;
 }
 h1,h2,h3 {
-	line-height: 1.2
+	line-height: 1.2;
 }
+
+/* ============================ */
+/* ========== STYLE =========== */
+/* ============================ */
+
+
+body > header h1 {
+	font-size: 24px;
+}
+
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-text-primary);
+}
+
+h1 {
+	color: var(--color-text-brand);
+}
+
+/* ============================ */
+/* ====== THEME / COLOR ======= */
+/* ============================ */
+
+/*
+color-canvas-inverted
+color-brand-primary
+color-brand-secondary
+color-brand-tertiary
+color-text-inverted
+*/
+
+
+/* Default light theme, should match `light` below. */
+:root {
+	--color-canvas: hsl(60, 10%, 95%);
+	--color-text-primary: hsl(217, 49%, 10%);
+	--color-text-highlight: hsl(217, 49%, 20%);
+	--color-text-brand: hsl(217, 49%, 20%);
+}
+/* Default dark theme, should match `dark` below. */
+@media (prefers-color-scheme: dark) {
+  :root {
+		--color-canvas: hsl(217, 0%, 10%);
+		--color-text-primary: hsl(210, 2%, 95%);
+		--color-text-highlight: hsl(210, 0%, 100%);
+		--color-text-brand: hsl(210, 30%, 80%);
+  }
+}
+[data-theme="light"] {
+	--color-canvas: hsl(60, 10%, 95%);
+	--color-text-primary: hsl(217, 49%, 10%);
+	--color-text-highlight: hsl(217, 49%, 20%);
+	--color-text-brand: hsl(217, 49%, 20%);
+}
+[data-theme="dark"] {
+		--color-canvas: hsl(217, 0%, 10%);
+		--color-text-primary: hsl(210, 2%, 95%);
+		--color-text-highlight: hsl(210, 0%, 100%);
+		--color-text-brand: hsl(210, 30%, 80%);
+}
+

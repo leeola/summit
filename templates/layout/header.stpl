@@ -1,13 +1,13 @@
 <header>
 	<h1>Site Name</h1>
-	<nav>
+	<nav class="nav">
 		<ul>
 			<li>Home</li>
 			<li>Foo</li>
 			<li>Bar</li>
 		</ul>
 	</nav>
-	<nav>
+	<nav class="account">
 		<ul>
 			<li>Register</li>
 			<li>Login</li>
