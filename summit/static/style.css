@@ -3,13 +3,13 @@
 /* ============================ */
 
 body {
-	width: 100%;
+	max-width: 90rem;
 	padding: 0;
-	margin: 0;
+	margin: 0 auto;
 }
 body > header {
-	display: grid;
 	width: 100%;
+	display: grid;
 	gap: 1rem;
 	grid-template-columns: repeat(3, 1fr);
 }
@@ -19,8 +19,29 @@ body > header h1 {
 body > header nav ul {
 	display: flex;
 	flex-direction: row;
+	margin: 0;
+	padding: 0;
 }
 body > header nav li {
+	padding: 0;
+	margin: 0 0.5rem;
+	list-style-type: none;
+}
+body > main {
+	display: grid;
+	gap: 1rem;
+	grid-template-columns: repeat(9, 1fr);
+}
+body > main > * {
+	grid-column: 2 / -2;
+}
+body > footer ul {
+	display: flex;
+	flex-direction: row;
+	margin: 0;
+	padding: 0;
+}
+body > footer nav li {
 	padding: 0;
 	margin: 0 0.5rem;
 	list-style-type: none;
