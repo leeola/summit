@@ -1,4 +1,4 @@
-use crate::{server::Summit, web::shutdown::ShutdownSignal};
+use crate::{web::shutdown::ShutdownSignal, Summit};
 use axum::{http::Request, routing::get, Router};
 use clap::Parser;
 use hyper::Body;

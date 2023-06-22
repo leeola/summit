@@ -1,5 +1,8 @@
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use clap::Parser;
+use compact_str::CompactString;
+use deepsize::DeepSizeOf;
 use std::fmt::Debug;
 use thiserror::Error;
 
@@ -24,13 +27,22 @@ pub enum DbError {
 #[async_trait]
 pub trait Db: Send + Sync + Debug {
     async fn posts(&self) -> Result<Vec<Post>>;
+    // NIT: Will need to introduce either alternate methods for in-app vs federated,
+    // or simply allow creation of arbitrary sources.
     async fn create_post(&self, create_post: CreatePost) -> Result<Post>;
 }
 #[derive(Debug, Clone)]
 pub struct Post {
+    pub id: CompactString,
+    // TODO: Author type. Names, origination, etc. CompactStr, prob.
+    pub author: String,
+    pub posted: DateTime<Utc>,
     pub title: String,
+    pub body: String,
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, DeepSizeOf)]
 pub struct CreatePost {
+    pub author: String,
     pub title: String,
+    pub body: String,
 }

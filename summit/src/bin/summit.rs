@@ -1,7 +1,6 @@
-use std::sync::Arc;
-
 use clap::Parser;
-use summit::{db::DbConfig, server::Summit, web::ServeConfig};
+use std::sync::Arc;
+use summit::{db::DbConfig, web::ServeConfig, Summit};
 use tracing::{metadata::LevelFilter, subscriber};
 use tracing_subscriber::EnvFilter;
 

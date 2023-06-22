@@ -15,7 +15,7 @@ path = "src/lib.rs"
 
 [features]
 default = ["dev"]
-dev = ["dep:fake"]
+dev = ["dep:fake", "dep:rand"]
 local_dev = ["dev"]
 
 [dependencies]
@@ -31,16 +31,24 @@ sqlx = { version = "0.7.0-alpha", features = ["sqlite", "chrono", "runtime-tokio
 sailfish = "0.6"
 tower-request-id = "0.2"
 kanal = "0.1.0-pre8"
-fake = { version = "2.6", optional = true }
 async-trait.workspace = true
 futures = "0.3"
 async-stream = "0.3"
+chrono = { workspace = true, features = ["serde"] }
+compact_str = { workspace = true, features = ["serde"] }
+rusty_ulid = "2.0"
+bytesize = "1.2"
+deepsize = "0.2"
 
 # TODO: Bin only. Waiting on some RFCs/Issues before we make them optional.
 # - https://github.com/rust-lang/cargo/issues/1982
 # - https://github.com/rust-lang/rfcs/pull/3374
 clap = { version = "4.3", features = ["derive", "env"] }
 tracing-subscriber = { version = "0.3", features = ["parking_lot", "env-filter"] }
+
+# features: dev
+fake = { version = "2.6", optional = true }
+rand = { version = "0.8", optional = true }
 
 [build-dependencies]
 anyhow.workspace = true

@@ -1,5 +1,6 @@
-use crate::{db::CreatePost, server::Summit};
+use crate::{db::CreatePost, Summit};
 use clap::Parser;
+use fake::{faker::lorem::en::Words, Dummy, Fake};
 use std::{sync::Arc, time::Duration};
 use tracing::warn;
 
@@ -51,12 +52,31 @@ impl FakeUsers {
             }
         }
     }
-    async fn fake_user_action(&self) -> crate::server::Result<()> {
+    async fn fake_user_action(&self) -> crate::Result<()> {
         self.summit
-            .create_post(CreatePost {
-                title: "foo".into(),
-            })
+            .create_post(
+                FakeCreatePost(FakeUser {
+                    user_name: "foo".into(),
+                })
+                .fake(),
+            )
             .await?;
         Ok(())
+    }
+}
+#[derive(Debug, Default)]
+pub struct FakeUser {
+    pub user_name: String,
+}
+pub struct FakeCreatePost(pub FakeUser);
+impl Dummy<FakeCreatePost> for CreatePost {
+    fn dummy_with_rng<R: rand::Rng + ?Sized>(config: &FakeCreatePost, rng: &mut R) -> Self {
+        Self {
+            author: config.0.user_name.clone(),
+            title: Words(2..10).fake_with_rng::<Vec<String>, _>(rng).join(" "),
+            body: Words(5..1_000)
+                .fake_with_rng::<Vec<String>, _>(rng)
+                .join(" "),
+        }
     }
 }

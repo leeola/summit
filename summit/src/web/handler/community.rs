@@ -1,4 +1,4 @@
-use crate::{db::Post, server::Summit, web::template::Template};
+use crate::{db::Post, web::template::Template, Summit};
 use axum::extract::State;
 use sailfish::TemplateOnce;
 use std::sync::Arc;
