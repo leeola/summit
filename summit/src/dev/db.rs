@@ -23,7 +23,7 @@ impl Db for DevDb {
             body,
         } = create_post;
         let post = Post {
-            id: "foo".into(),
+            // id: "foo".into(),
             posted: Utc::now(),
             author,
             title,

@@ -1,8 +1,13 @@
-use crate::{db::CreatePost, Summit};
+use crate::{
+    db::{CreatePost, FediAddr, User},
+    Summit,
+};
 use clap::Parser;
 use fake::{faker::lorem::en::Words, Dummy, Fake};
 use std::{sync::Arc, time::Duration};
 use tracing::warn;
+
+use super::text::{Locale, Name};
 
 #[derive(Parser, Debug, Default, Clone)]
 pub struct FakeUserInitConfig {
@@ -54,27 +59,39 @@ impl FakeUsers {
     }
     async fn fake_user_action(&self) -> crate::Result<()> {
         self.summit
-            .create_post(
-                FakeCreatePost(FakeUser {
-                    user_name: "foo".into(),
-                })
-                .fake(),
-            )
+            .create_post(FakeCreatePost(Locale::En.fake()).fake())
             .await?;
         Ok(())
     }
 }
+impl Dummy<Locale> for User {
+    fn dummy_with_rng<R: rand::Rng + ?Sized>(&locale: &Locale, rng: &mut R) -> Self {
+        Self {
+            fedi_addr: locale.fake_with_rng(rng),
+        }
+    }
+}
 #[derive(Debug, Default)]
 pub struct FakeUser {
-    pub user_name: String,
+    pub locale: Locale,
+    pub user: User,
 }
+impl Dummy<Locale> for FakeUser {
+    fn dummy_with_rng<R: rand::Rng + ?Sized>(&locale: &Locale, rng: &mut R) -> Self {
+        Self {
+            locale,
+            user: locale.fake_with_rng(rng),
+        }
+    }
+}
+
 pub struct FakeCreatePost(pub FakeUser);
 impl Dummy<FakeCreatePost> for CreatePost {
     fn dummy_with_rng<R: rand::Rng + ?Sized>(config: &FakeCreatePost, rng: &mut R) -> Self {
         Self {
-            author: config.0.user_name.clone(),
-            title: Words(2..10).fake_with_rng::<Vec<String>, _>(rng).join(" "),
-            body: Words(5..1_000)
+            author: config.0.user.clone(),
+            title: Words(1..10).fake_with_rng::<Vec<String>, _>(rng).join(" "),
+            body: Words(2..1_000)
                 .fake_with_rng::<Vec<String>, _>(rng)
                 .join(" "),
         }

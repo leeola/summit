@@ -1,7 +1,4 @@
-use crate::{
-    db::{CreatePost, Db, DbError, Post},
-    util::ByteSizeOf,
-};
+use crate::db::{CreatePost, Db, DbError, Post};
 use std::fmt;
 use thiserror::Error;
 use tracing::{debug, instrument};
@@ -33,7 +30,11 @@ impl Summit {
     pub fn new(db: Box<dyn Db>) -> Self {
         Self { db }
     }
-    #[instrument(skip_all, fields(user=create_post.author, post_size=create_post.byte_size_of()))]
+    #[instrument(skip_all, fields(
+        // user_id=create_post.author.id,
+        ?user_fedi_addr=create_post.author.fedi_addr.format(),
+        post_size=create_post.body_size(),
+    ))]
     pub async fn create_post(&self, create_post: CreatePost) -> Result<Post> {
         debug!("creating post");
         let post = self.db.create_post(create_post).await?;

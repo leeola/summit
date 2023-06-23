@@ -1,8 +1,8 @@
 use async_trait::async_trait;
+use bytesize::ByteSize;
 use chrono::{DateTime, Utc};
 use clap::Parser;
-use compact_str::CompactString;
-use deepsize::DeepSizeOf;
+use compact_str::{format_compact, CompactString};
 use std::fmt::Debug;
 use thiserror::Error;
 
@@ -33,16 +33,40 @@ pub trait Db: Send + Sync + Debug {
 }
 #[derive(Debug, Clone)]
 pub struct Post {
-    pub id: CompactString,
-    // TODO: Author type. Names, origination, etc. CompactStr, prob.
-    pub author: String,
+    // pub id: CompactString,
+    pub author: User,
     pub posted: DateTime<Utc>,
     pub title: String,
     pub body: String,
 }
-#[derive(Debug, Clone, DeepSizeOf)]
+#[derive(Debug, Clone)]
 pub struct CreatePost {
-    pub author: String,
+    pub author: User,
     pub title: String,
     pub body: String,
+}
+impl CreatePost {
+    /// Render the body size, for logging mostly.
+    pub fn body_size(&self) -> String {
+        // NIT: Why doesn't u64::from(usize) work? :thinking:
+        ByteSize::b(self.body.len() as u64).to_string_as(true)
+    }
+}
+#[derive(Debug, Default, Clone)]
+pub struct User {
+    // pub id: CompactString,
+    pub fedi_addr: FediAddr,
+}
+#[derive(Debug, Default, Clone)]
+pub struct FediAddr {
+    pub user: CompactString,
+    pub host: CompactString,
+}
+impl FediAddr {
+    pub fn format(&self) -> CompactString {
+        let Self { user, host, .. } = self;
+        // NIT: Should this alter behavior if name or host are missing? Probably only useful for
+        // edgecases like Default or w/e.
+        format_compact!("@{user}@{host}")
+    }
 }
