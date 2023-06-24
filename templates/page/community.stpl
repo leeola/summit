@@ -3,12 +3,12 @@
 <main>
   <div hx-sse="connect:/live swap:newCommunityPost" hx-swap="afterbegin">
   </div>
-  <% for post in posts.iter() { %>
+  <% for post in posts.into_iter() { %>
     <article>
       <h2><%= post.title %></h2>
       <p><%= post.body %></p>
       <footer>
-        Posted by <%= post.author.fedi_addr %>
+        Posted by <%+ post.author.fedi_addr %>
         on <time><%= post.created_on.to_local(user_tz) %></time>
       </footer>
     </article>

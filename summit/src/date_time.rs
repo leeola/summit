@@ -29,7 +29,8 @@ impl Default for TimeZone {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct LocalDateTime(DateTime, TimeZone);
 impl Render for LocalDateTime {
-    fn render(&self, b: &mut Buffer) -> Result<(), RenderError> {
+    #[inline]
+    fn render(&self, buf: &mut Buffer) -> Result<(), RenderError> {
         let &Self(DateTime(date_time_utc), TimeZone(offset)) = self;
         let date_time = date_time_utc + offset;
         // NIT: Is there a way we can render this without allocating? Seems every component of
@@ -39,7 +40,7 @@ impl Render for LocalDateTime {
         // For now just using the native formatting for ease. No need to shave this yak.
         //
         // TODO: Time display preferences would be nice.
-        b.push_str(&format!("{}", date_time.format("%b %m, %Y %l:%M%P")));
+        buf.push_str(&format!("{}", date_time.format("%b %m, %Y %l:%M%P")));
         Ok(())
     }
 }

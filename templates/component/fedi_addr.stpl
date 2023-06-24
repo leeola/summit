@@ -1,0 +1,2 @@
+@<span class="fedi_user"><%= user.as_str() %></span>
+@<span class="fedi_host"><%= host.as_str() %></span>
