@@ -5,7 +5,7 @@ use fake::{faker::name::en, Dummy, Fake};
 //
 // NIT: This makes dummy generation super verbose, need to find a way to make this more generic,
 // otherwise every dummy has a match that will be awful anytime a new lang variant is added.
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, Dummy)]
 pub enum Locale {
     #[default]
     En,

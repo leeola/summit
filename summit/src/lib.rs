@@ -6,7 +6,6 @@ use tracing::{debug, instrument};
 pub mod db;
 #[cfg(any(test, feature = "dev"))]
 pub mod dev;
-pub mod util;
 pub mod web;
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;

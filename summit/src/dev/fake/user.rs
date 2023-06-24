@@ -1,69 +1,15 @@
+use super::text::Locale;
 use crate::{
-    db::{CreatePost, FediAddr, User},
+    db::{CreatePost, User},
     Summit,
 };
-use clap::Parser;
-use fake::{faker::lorem::en::Words, Dummy, Fake};
+use fake::{faker::lorem::en::Words, Dummy, Fake, Faker};
 use std::{sync::Arc, time::Duration};
 use tracing::warn;
 
-use super::text::{Locale, Name};
+// temp compat.
+pub use super::users::*;
 
-#[derive(Parser, Debug, Default, Clone)]
-pub struct FakeUserInitConfig {
-    /// The number of fake users to create at startup.
-    ///
-    /// The higher this number is the more direct user load there will be, so balance this with
-    /// other types of fake activity.
-    ///
-    /// See also [`FakeConfig`](crate::dev::fake).
-    #[arg(long, default_value_t = 1)]
-    pub fake_user_count: u16,
-    /// Start fake users on creation, after [`Self::start_on_init_delay`].
-    #[arg(long, default_value_t = true)]
-    pub start_on_init: bool,
-    #[arg(long, default_value_t = 3)]
-    pub start_on_init_delay_secs: u64,
-}
-impl FakeUserInitConfig {
-    /// Initialize fake users over the given Summit instance.
-    //
-    // TODO: Include stop channel.
-    pub async fn init(&self, summit: Arc<Summit>) -> Arc<FakeUsers> {
-        let f = Arc::new(FakeUsers::new(summit));
-        if self.start_on_init && self.fake_user_count > 0 {
-            let f = Arc::clone(&f);
-            tokio::spawn(async move { f.run().await });
-        }
-        f
-    }
-}
-
-#[derive(Debug)]
-pub struct FakeUsers {
-    summit: Arc<Summit>,
-}
-impl FakeUsers {
-    pub fn new(summit: Arc<Summit>) -> Self {
-        Self { summit }
-    }
-    pub async fn run(&self) {
-        warn!("starting fake user..");
-        loop {
-            // TODO: randomize delay. Probably centralize some random callback behavior?
-            tokio::time::sleep(Duration::from_secs(5)).await;
-            if let Err(err) = self.fake_user_action().await {
-                warn!(?err, "encountered error faking user action");
-            }
-        }
-    }
-    async fn fake_user_action(&self) -> crate::Result<()> {
-        self.summit
-            .create_post(FakeCreatePost(Locale::En.fake()).fake())
-            .await?;
-        Ok(())
-    }
-}
 impl Dummy<Locale> for User {
     fn dummy_with_rng<R: rand::Rng + ?Sized>(&locale: &Locale, rng: &mut R) -> Self {
         Self {
@@ -71,23 +17,76 @@ impl Dummy<Locale> for User {
         }
     }
 }
+#[derive(Debug)]
+pub struct FakeUserRt<R> {
+    pub rng: R,
+    pub summit: Arc<Summit>,
+    pub fake_user: FakeUser,
+}
+impl<R: rand::Rng> FakeUserRt<R> {
+    /// Construct a new user with fake parameters generated from the given seed.
+    pub fn new(mut rng: R, summit: Arc<Summit>, new_fake_user: NewFakeUser) -> Self {
+        let fake_user = new_fake_user.fake_with_rng(&mut rng);
+        Self {
+            rng,
+            summit,
+            fake_user,
+        }
+    }
+    pub async fn start(mut self) {
+        warn!(
+            fake_user = ?self.fake_user.user.fedi_addr.format(),
+            rate_of_actions_secs = self.fake_user.rate_of_actions_secs,
+            "starting fake user",
+        );
+        loop {
+            tokio::time::sleep(Duration::from_secs(self.fake_user.rate_of_actions_secs)).await;
+            if let Err(err) = self.action().await {
+                warn!(?err, "encountered error faking user action");
+            }
+        }
+    }
+    async fn action(&mut self) -> crate::Result<()> {
+        self.summit
+            .create_post(FakeCreatePost(&self.fake_user).fake_with_rng(&mut self.rng))
+            .await?;
+        Ok(())
+    }
+}
 #[derive(Debug, Default)]
 pub struct FakeUser {
     pub locale: Locale,
     pub user: User,
+    pub rate_of_actions_secs: u64,
 }
-impl Dummy<Locale> for FakeUser {
-    fn dummy_with_rng<R: rand::Rng + ?Sized>(&locale: &Locale, rng: &mut R) -> Self {
+impl Dummy<NewFakeUser> for FakeUser {
+    fn dummy_with_rng<R: rand::Rng + ?Sized>(config: &NewFakeUser, rng: &mut R) -> Self {
+        let locale: Locale = Faker.fake_with_rng(rng);
+        let user = locale.fake_with_rng(rng);
+        let rate_of_actions_frac: f64 = (0.01..1.0).fake_with_rng(rng);
+        // First, calculate the secs based on the above fraction range. This makes it so that you
+        // can configure (CLI/etc) the upper bound, ie the amount of spammy, without affecting which
+        // users are spammy, which are slow, etc. Slow and spammy is all relative to the range.
+        let rate_of_actions_secs = ((config.config.rate_of_actions_secs_max as f64
+            * rate_of_actions_frac)
+            .round() as u64)
+            // ensure we never go below 1s spam
+            .max(1)
+            // Next, to help ensure the first users are spammy for testing, we apply a cap where as
+            // each user is created they're affected less and less by the cap.
+            .min(5 * config.fake_user_count);
+
         Self {
             locale,
-            user: locale.fake_with_rng(rng),
+            user,
+            rate_of_actions_secs,
         }
     }
 }
 
-pub struct FakeCreatePost(pub FakeUser);
-impl Dummy<FakeCreatePost> for CreatePost {
-    fn dummy_with_rng<R: rand::Rng + ?Sized>(config: &FakeCreatePost, rng: &mut R) -> Self {
+pub struct FakeCreatePost<'a>(&'a FakeUser);
+impl Dummy<FakeCreatePost<'_>> for CreatePost {
+    fn dummy_with_rng<R: rand::Rng + ?Sized>(config: &FakeCreatePost<'_>, rng: &mut R) -> Self {
         Self {
             author: config.0.user.clone(),
             title: Words(1..10).fake_with_rng::<Vec<String>, _>(rng).join(" "),

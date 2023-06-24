@@ -47,7 +47,7 @@ clap = { version = "4.3", features = ["derive", "env"] }
 tracing-subscriber = { version = "0.3", features = ["parking_lot", "env-filter"] }
 
 # features: dev
-fake = { version = "2.6", optional = true }
+fake = { version = "2.6", optional = true, features = ["derive"] }
 rand = { version = "0.8", optional = true }
 
 [build-dependencies]

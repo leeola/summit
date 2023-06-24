@@ -1,14 +1,14 @@
-use crate::db::{FediAddr, User};
-
 use self::{
     text::{FediHost, FediUser, Locale},
     user::FakeUserInitConfig,
 };
+use crate::db::FediAddr;
 use clap::Parser;
 use fake::{Dummy, Fake};
 
 pub mod text;
 pub mod user;
+pub mod users;
 
 #[derive(Parser, Debug, Default, Clone)]
 pub struct FakeConfig {
