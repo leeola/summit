@@ -29,7 +29,6 @@ impl Default for TimeZone {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct LocalDateTime(DateTime, TimeZone);
 impl Render for LocalDateTime {
-    // Required method
     fn render(&self, b: &mut Buffer) -> Result<(), RenderError> {
         let &Self(DateTime(date_time_utc), TimeZone(offset)) = self;
         let date_time = date_time_utc + offset;

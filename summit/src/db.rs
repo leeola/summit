@@ -3,6 +3,10 @@ use async_trait::async_trait;
 use bytesize::ByteSize;
 use clap::Parser;
 use compact_str::{format_compact, CompactString};
+use sailfish::{
+    runtime::{Buffer, Render},
+    RenderError,
+};
 use std::fmt::Debug;
 use thiserror::Error;
 
@@ -68,5 +72,14 @@ impl FediAddr {
         // NIT: Should this alter behavior if name or host are missing? Probably only useful for
         // edgecases like Default or w/e.
         format_compact!("@{user}@{host}")
+    }
+}
+impl Render for FediAddr {
+    fn render(&self, buf: &mut Buffer) -> Result<(), RenderError> {
+        buf.push_str("@");
+        buf.push_str(self.user.as_str());
+        buf.push_str("@");
+        buf.push_str(self.host.as_str());
+        Ok(())
     }
 }
