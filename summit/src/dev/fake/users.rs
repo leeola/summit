@@ -19,7 +19,7 @@ pub struct FakeUserInitConfig {
     ///
     /// See also [`FakeConfig`](crate::dev::fake).
     #[arg(long, default_value_t = 1)]
-    pub fake_user_startup_count: u16,
+    pub fake_count: u16,
     /// The delay on startup user creation, if [`Self::fake_user_startup_count`] is > 0.
     #[arg(long, default_value_t = 2)]
     pub start_on_init_delay_secs: u64,
@@ -33,16 +33,16 @@ impl FakeUserInitConfig {
     // TODO: Include stop channel.
     pub async fn init(&self, summit: Arc<Summit>) -> Arc<FakeUsers> {
         let f = Arc::new(FakeUsers::new(summit, &self));
-        if self.fake_user_startup_count > 0 {
+        if self.fake_count > 0 {
             let config = self.clone();
             let f = Arc::clone(&f);
             tokio::spawn(async move {
                 tokio::time::sleep(Duration::from_secs(config.start_on_init_delay_secs)).await;
-                for fake_user_index in 0..config.fake_user_startup_count {
+                for fake_user_index in 0..config.fake_count {
                     if let Err(err) = f.new_and_start().await {
                         warn!(
                             fake_user_index,
-                            out_of = config.fake_user_startup_count,
+                            out_of = config.fake_count,
                             ?err,
                             "failed to create fake user at startup"
                         );
