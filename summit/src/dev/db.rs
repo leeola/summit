@@ -1,7 +1,9 @@
-use crate::db::{CreatePost, Db, Post, Result};
+use crate::{
+    date_time::DateTime,
+    db::{CreatePost, Db, Post, Result},
+};
 use anyhow::anyhow;
 use async_trait::async_trait;
-use chrono::Utc;
 use std::sync::RwLock;
 
 #[derive(Debug, Default)]
@@ -24,7 +26,7 @@ impl Db for DevDb {
         } = create_post;
         let post = Post {
             // id: "foo".into(),
-            posted: Utc::now(),
+            created_on: DateTime::now(),
             author,
             title,
             body,

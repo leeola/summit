@@ -1,6 +1,6 @@
 use super::text::Locale;
 use crate::{
-    db::{CreatePost, User},
+    db::{Author, CreatePost},
     Summit,
 };
 use fake::{faker::lorem::en::Words, Dummy, Fake, Faker};
@@ -10,7 +10,7 @@ use tracing::warn;
 // temp compat.
 pub use super::users::*;
 
-impl Dummy<Locale> for User {
+impl Dummy<Locale> for Author {
     fn dummy_with_rng<R: rand::Rng + ?Sized>(&locale: &Locale, rng: &mut R) -> Self {
         Self {
             fedi_addr: locale.fake_with_rng(rng),
@@ -56,7 +56,7 @@ impl<R: rand::Rng> FakeUserRt<R> {
 #[derive(Debug, Default)]
 pub struct FakeUser {
     pub locale: Locale,
-    pub user: User,
+    pub user: Author,
     pub rate_of_actions_secs: u64,
 }
 impl Dummy<NewFakeUser> for FakeUser {

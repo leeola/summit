@@ -1,6 +1,6 @@
+use crate::date_time::DateTime;
 use async_trait::async_trait;
 use bytesize::ByteSize;
-use chrono::{DateTime, Utc};
 use clap::Parser;
 use compact_str::{format_compact, CompactString};
 use std::fmt::Debug;
@@ -34,14 +34,14 @@ pub trait Db: Send + Sync + Debug {
 #[derive(Debug, Clone)]
 pub struct Post {
     // pub id: CompactString,
-    pub author: User,
-    pub posted: DateTime<Utc>,
+    pub author: Author,
+    pub created_on: DateTime,
     pub title: String,
     pub body: String,
 }
 #[derive(Debug, Clone)]
 pub struct CreatePost {
-    pub author: User,
+    pub author: Author,
     pub title: String,
     pub body: String,
 }
@@ -53,7 +53,7 @@ impl CreatePost {
     }
 }
 #[derive(Debug, Default, Clone)]
-pub struct User {
+pub struct Author {
     // pub id: CompactString,
     pub fedi_addr: FediAddr,
 }

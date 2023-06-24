@@ -1,8 +1,10 @@
 use crate::db::{CreatePost, Db, DbError, Post};
+use date_time::TimeZone;
 use std::fmt;
 use thiserror::Error;
 use tracing::{debug, instrument};
 
+pub mod date_time;
 pub mod db;
 #[cfg(any(test, feature = "dev"))]
 pub mod dev;
@@ -50,4 +52,10 @@ impl fmt::Debug for Summit {
         // about Summit, event counts, connection counts, etc.
         f.debug_struct("Summit").finish()
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct User {
+    // pub id: CompactString,
+    pub time_zone: TimeZone,
 }
