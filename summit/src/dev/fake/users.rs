@@ -18,13 +18,13 @@ pub struct FakeUserInitConfig {
     /// other types of fake activity.
     ///
     /// See also [`FakeConfig`](crate::dev::fake).
-    #[arg(long, default_value_t = 100)]
+    #[arg(long, default_value_t = 1)]
     pub fake_user_startup_count: u16,
     /// The delay on startup user creation, if [`Self::fake_user_startup_count`] is > 0.
-    #[arg(long, default_value_t = 3)]
+    #[arg(long, default_value_t = 2)]
     pub start_on_init_delay_secs: u64,
     /// The maximum delay in seconds that fake users will end up with.
-    #[arg(long, default_value_t = 600)]
+    #[arg(long, default_value_t = 60)]
     pub rate_of_actions_secs_max: u64,
 }
 impl FakeUserInitConfig {
@@ -47,12 +47,8 @@ impl FakeUserInitConfig {
                             "failed to create fake user at startup"
                         );
                     }
-                    // NOTE: Intentionally using an RNG generator here not associated with the
-                    // user_creation_rng, to ensure consistent output from the fake user
-                    // creation.
-                    //
-                    // TODO: derive RNG from config specified seed.
-                    tokio::time::sleep(Duration::from_secs((0..5).fake())).await;
+                    // A slight pause to make initial user creation log readable.. ish.
+                    tokio::time::sleep(Duration::from_millis(100)).await;
                 }
             });
         }
