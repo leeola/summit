@@ -8,7 +8,7 @@ use std::{
     sync::Mutex,
 };
 use thiserror::Error;
-use tracing::{debug, instrument};
+use tracing::{debug, error, info, instrument};
 use uuid::{RequestId, UserId};
 
 pub mod date_time;
@@ -34,6 +34,7 @@ impl From<DbError> for Error {
 
 pub struct Summit {
     db: Box<dyn Db>,
+    content_process_queue: (AsyncSender<Post>, AsyncReceiver<Post>),
     /// CONCURRENCY: Prototype design, this is naive on purpose. I also have no firm design on
     /// propagating and filtering events to users yet, so don't prematurely engineer .. right?
     user_events: Mutex<HashMap<UserId, BTreeMap<RequestId, (AsyncSender<()>, AsyncReceiver<()>)>>>,
@@ -42,6 +43,9 @@ impl Summit {
     pub fn new(db: Box<dyn Db>) -> Self {
         Self {
             db,
+            // TODO: Change to a local bounded queue, configurable size, with the ability to offload
+            // load to disk.
+            content_process_queue: kanal::unbounded_async(),
             user_events: Default::default(),
         }
     }
@@ -53,7 +57,23 @@ impl Summit {
     pub async fn create_post(&self, create_post: CreatePost) -> Result<Post> {
         debug!("creating post");
         let post = self.db.create_post(create_post).await?;
+        self.send_post_event(post.clone()).await;
         Ok(post)
+    }
+    #[instrument(skip_all, fields(
+        content_process_queue_len=self.content_process_queue.0.len()),
+    )]
+    async fn send_post_event(&self, post: Post) {
+        // TODO: per-user rules. But that requires users, which don't exist yet.
+        if let Err(err) = self.content_process_queue.0.send(post).await {
+            error!(?err, "failed to push post to content process queue");
+        }
+    }
+    /// Return a channel receiver for events matching the given [`UserId`].
+    //
+    // TODO: Centralize channel types, don't expose underlying impl - currently Kanal.
+    pub fn user_events(&self, _user_id: UserId) -> AsyncReceiver<Post> {
+        self.content_process_queue.1.clone()
     }
     pub async fn posts(&self) -> Result<Vec<Post>> {
         let posts = self.db.posts().await?;
