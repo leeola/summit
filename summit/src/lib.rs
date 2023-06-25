@@ -8,7 +8,7 @@ use std::{
     sync::Mutex,
 };
 use thiserror::Error;
-use tracing::{debug, error, info, instrument};
+use tracing::{debug, error, instrument};
 use uuid::{RequestId, UserId};
 
 pub mod date_time;

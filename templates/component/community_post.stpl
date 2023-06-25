@@ -1,0 +1,8 @@
+<article>
+  <h2><%= title %></h2>
+  <p><%= body %></p>
+  <footer>
+    Posted by <%+ author.fedi_addr %>
+    on <time><%= created_on.to_local(user_tz) %></time>
+  </footer>
+</article>

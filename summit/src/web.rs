@@ -36,7 +36,7 @@ pub async fn serve(
         .route("/c/", get(handler::community::handler))
         .route(
             "/live",
-            get(handler::live::live_handler).with_state(shutdown_signal.clone()),
+            get(handler::live::live_handler).with_state((summit.clone(), shutdown_signal.clone())),
         )
         .route("/static/*key", get(handler::static_assets::serve_asset))
         .with_state(summit);
@@ -45,6 +45,8 @@ pub async fn serve(
         "/dev/watch-restart",
         get(handler::dev::restart::restart_handler).with_state(shutdown_signal.clone()),
     );
+    // FIXME: I think this doesn't work with Axum handlers. Need to move this to whatever handler
+    // consumes this in the future, most likely some admin endpoint.
     #[cfg(any(test, feature = "dev"))]
     let app = app.with_state(fake);
     let app = app

@@ -3,15 +3,8 @@
 <main>
   <div hx-sse="connect:/live swap:newCommunityPost" hx-swap="afterbegin">
   </div>
-  <% for post in posts.into_iter() { %>
-    <article>
-      <h2><%= post.title %></h2>
-      <p><%= post.body %></p>
-      <footer>
-        Posted by <%+ post.author.fedi_addr %>
-        on <time><%= post.created_on.to_local(user_tz) %></time>
-      </footer>
-    </article>
+  <% for post in posts { %>
+    <%+ post %>
   <% } %>
 </main>
 <% include!("../layout/footer.stpl"); %>
