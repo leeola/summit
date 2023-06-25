@@ -1,8 +1,6 @@
 <% include!("../layout/head.stpl"); %>
 <% include!("../layout/header.stpl"); %>
-<main>
-  <div hx-sse="connect:/live swap:newCommunityPost" hx-swap="afterbegin">
-  </div>
+<main hx-sse="connect:/live swap:newCommunityPost" hx-swap="afterbegin">
   <% for post in posts { %>
     <%+ post %>
   <% } %>

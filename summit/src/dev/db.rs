@@ -16,7 +16,7 @@ struct Inner {
 impl Db for DevDb {
     async fn posts(&self) -> Result<Vec<Post>> {
         let db = self.0.read().map_err(|_| anyhow!("lock error"))?;
-        Ok(db.posts.clone())
+        Ok(db.posts.iter().cloned().rev().take(100).collect())
     }
     async fn create_post(&self, create_post: CreatePost) -> Result<Post> {
         let CreatePost {
