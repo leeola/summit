@@ -1,4 +1,7 @@
-use crate::{uuid::RequestId, web::shutdown::ShutdownSignal};
+use crate::{
+    uuid::{RequestId, UserId},
+    web::shutdown::ShutdownSignal,
+};
 use axum::{
     extract::State,
     response::sse::{Event, Sse},
@@ -12,7 +15,10 @@ pub async fn live_handler(
     State(shutdown_signal): State<ShutdownSignal>,
     Extension(req_id): Extension<RequestId>,
 ) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
-    info!("starting sse connection");
+    // No users are registered yet. Use a default.
+    let user_id = UserId::default();
+
+    info!(%user_id, "starting sse connection");
 
     let start = std::time::Instant::now();
     let stream = async_stream::stream! {

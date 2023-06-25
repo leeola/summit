@@ -1,8 +1,15 @@
 use crate::db::{CreatePost, Db, DbError, Post};
+use anyhow::anyhow;
 use date_time::TimeZone;
-use std::fmt;
+use kanal::{AsyncReceiver, AsyncSender};
+use std::{
+    collections::{BTreeMap, HashMap},
+    fmt,
+    sync::Mutex,
+};
 use thiserror::Error;
 use tracing::{debug, instrument};
+use uuid::{RequestId, UserId};
 
 pub mod date_time;
 pub mod db;
@@ -27,10 +34,16 @@ impl From<DbError> for Error {
 
 pub struct Summit {
     db: Box<dyn Db>,
+    /// CONCURRENCY: Prototype design, this is naive on purpose. I also have no firm design on
+    /// propagating and filtering events to users yet, so don't prematurely engineer .. right?
+    user_events: Mutex<HashMap<UserId, BTreeMap<RequestId, (AsyncSender<()>, AsyncReceiver<()>)>>>,
 }
 impl Summit {
     pub fn new(db: Box<dyn Db>) -> Self {
-        Self { db }
+        Self {
+            db,
+            user_events: Default::default(),
+        }
     }
     #[instrument(skip_all, fields(
         // user_id=create_post.author.id,
@@ -45,6 +58,22 @@ impl Summit {
     pub async fn posts(&self) -> Result<Vec<Post>> {
         let posts = self.db.posts().await?;
         Ok(posts)
+    }
+    pub async fn open_event_stream(
+        &self,
+        user_id: UserId,
+        req_id: RequestId,
+    ) -> Result<AsyncReceiver<()>> {
+        let mut user_events = self.user_events.lock().map_err(|err| anyhow!("{err}"))?;
+        let (_, receiver) = user_events
+            .entry(user_id)
+            .or_default()
+            .entry(req_id)
+            .or_insert_with(|| {
+                let (sender, receiver) = kanal::bounded_async::<()>(2);
+                (sender, receiver)
+            });
+        Ok(receiver.clone())
     }
 }
 impl fmt::Debug for Summit {
