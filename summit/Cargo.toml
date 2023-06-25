@@ -26,19 +26,21 @@ thiserror.workspace = true
 anyhow.workspace = true
 axum = { version = "0.6", features = ["tracing", "headers"] }
 mime = "0.3"
+http = "0.2"
 tower-http = { version = "0.4.0", features = ["trace"] }
+tower-layer = "0.3"
+tower-service = "0.3"
 sqlx = { version = "0.7.0-alpha", features = ["sqlite", "chrono", "runtime-tokio"] }
 sailfish = "0.6"
-tower-request-id = "0.2"
 kanal = "0.1.0-pre8"
 async-trait.workspace = true
 futures = "0.3"
 async-stream = "0.3"
 chrono = { workspace = true, features = ["serde"] }
 compact_str = { workspace = true, features = ["serde"] }
-rusty_ulid = "2.0"
 bytesize = "1.2"
-deepsize = "0.2"
+uuid7 = "0.6"
+data-encoding = "2.4"
 
 # TODO: Bin only. Waiting on some RFCs/Issues before we make them optional.
 # - https://github.com/rust-lang/cargo/issues/1982

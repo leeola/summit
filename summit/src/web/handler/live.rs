@@ -1,7 +1,8 @@
-use crate::web::shutdown::ShutdownSignal;
+use crate::{uuid::RequestId, web::shutdown::ShutdownSignal};
 use axum::{
     extract::State,
     response::sse::{Event, Sse},
+    Extension,
 };
 use futures::stream::Stream;
 use std::{convert::Infallible, pin::pin, time::Duration};
@@ -9,6 +10,7 @@ use tracing::{info, trace, Span};
 
 pub async fn live_handler(
     State(shutdown_signal): State<ShutdownSignal>,
+    Extension(req_id): Extension<RequestId>,
 ) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
     info!("starting sse connection");
 

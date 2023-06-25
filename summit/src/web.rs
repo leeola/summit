@@ -1,12 +1,17 @@
-use crate::{web::shutdown::ShutdownSignal, Summit};
-use axum::{http::Request, routing::get, Router};
+use crate::{
+    web::{
+        extension::request_id::{self, RequestIdLayer},
+        shutdown::ShutdownSignal,
+    },
+    Summit,
+};
+use axum::{routing::get, Router};
 use clap::Parser;
-use hyper::Body;
 use std::sync::Arc;
 use tower_http::trace::TraceLayer;
-use tower_request_id::{RequestId, RequestIdLayer};
-use tracing::{error_span, info};
+use tracing::info;
 
+mod extension;
 pub mod handler;
 mod shutdown;
 pub mod template;
@@ -43,26 +48,7 @@ pub async fn serve(
     #[cfg(any(test, feature = "dev"))]
     let app = app.with_state(fake);
     let app = app
-        .layer(
-            // Let's create a tracing span for each request
-            TraceLayer::new_for_http().make_span_with(|request: &Request<Body>| {
-                // We get the request id from the extensions
-                let request_id = request
-                    .extensions()
-                    .get::<RequestId>()
-                    .map(ToString::to_string)
-                    .unwrap_or_else(|| "unknown".into());
-                // And then we put it along with other information into the `request` span
-                error_span!(
-                    "request",
-                    id = %request_id,
-                    method = %request.method(),
-                    uri = %request.uri(),
-                )
-            }),
-        )
-        // This layer creates a new id for each request and puts it into the request extensions.
-        // Note that it should be added after the Trace layer.
+        .layer(TraceLayer::new_for_http().make_span_with(request_id::trace_layer_span_with))
         .layer(RequestIdLayer);
 
     let ServeConfig { host, port } = config;

@@ -8,6 +8,7 @@ pub mod date_time;
 pub mod db;
 #[cfg(any(test, feature = "dev"))]
 pub mod dev;
+pub mod uuid;
 pub mod web;
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
