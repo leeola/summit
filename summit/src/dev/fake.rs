@@ -1,5 +1,5 @@
 use self::{
-    text::{FediHost, FediUser, Locale},
+    text::{locale::Locale, FediHost, FediUser},
     user::FakeUserInitConfig,
 };
 use crate::db::FediAddr;

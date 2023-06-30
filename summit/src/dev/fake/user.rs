@@ -1,4 +1,4 @@
-use super::text::Locale;
+use super::text::locale::Locale;
 use crate::{
     db::{Author, CreatePost},
     Summit,
