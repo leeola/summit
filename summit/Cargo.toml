@@ -41,6 +41,7 @@ compact_str = { workspace = true, features = ["serde"] }
 bytesize = "1.2"
 uuid7 = "0.6"
 data-encoding = "2.4"
+data-encoding-macro = "0.1"
 
 # TODO: Bin only. Waiting on some RFCs/Issues before we make them optional.
 # - https://github.com/rust-lang/cargo/issues/1982
