@@ -1,9 +1,7 @@
 //! A general implementation of [`Uuid`] and wrapper types like [`RequestId`] and [`UserId`].
-use self::base32_nowords::BASE32_NOWORDS;
 use compact_str::CompactString;
+use data_encoding::BASE64URL_NOPAD;
 use std::fmt;
-
-pub mod base32_nowords;
 
 /// A general purpose centralized uuid, currently using UUIDv7, and encoding itself with  
 #[derive(Debug, Default, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -23,7 +21,7 @@ impl Uuid {
         //
         // Ultimately i'm not doing this because of a needless unsafe. Though i'm not clear if is
         // inlined anyway.. need to check, because i'm curious.
-        BASE32_NOWORDS.encode(self.0.as_ref()).into()
+        BASE64URL_NOPAD.encode(self.0.as_ref()).into()
     }
 }
 impl fmt::Display for Uuid {
