@@ -1,4 +1,4 @@
-use super::locale::{Locale, LocaleText};
+use super::locale::LocaleText;
 use crate::dev::fake::text::locale;
 use fake::{Dummy, Fake, Faker};
 use rand::Rng;
@@ -7,19 +7,62 @@ use rand::Rng;
 pub enum WordMarkup {
     #[default]
     None,
-    Italic,
-    Bold,
+    ItalicStar,
+    ItalicUnderscore,
+    BoldStar,
+    BoldUnderscore,
+    BoldItalicStar,
+    BoldItalicUnderscore,
     // InlineCode,
     // NIT: Hash and Internal will be difficult to generate, but it would be nice.
     // HashLink,
     // InternalLink,
     // ExternalLink,
 }
+impl WordMarkup {
+    pub fn format_string(&self, s: &mut String) {
+        match self {
+            WordMarkup::None => return,
+            WordMarkup::ItalicStar => *s = format!("*{}*", &s),
+            WordMarkup::ItalicUnderscore => *s = format!("_{}_", &s),
+            WordMarkup::BoldStar => *s = format!("**{}**", &s),
+            WordMarkup::BoldUnderscore => *s = format!("__{}__", &s),
+            WordMarkup::BoldItalicStar => *s = format!("***{}***", &s),
+            WordMarkup::BoldItalicUnderscore => *s = format!("___{}___", &s),
+        }
+    }
+}
 impl Dummy<Faker> for WordMarkup {
     fn dummy_with_rng<R: Rng + ?Sized>(_: &Faker, rng: &mut R) -> Self {
-        match (0..100).fake_with_rng(rng) {
-            i if (0..15).contains(&i) => Self::Italic,
-            i if (15..30).contains(&i) => Self::Bold,
+        MarkupFreq(1.0).fake_with_rng(rng)
+    }
+}
+/// Fake a markup percentage with markup usage frequency adjusted by the given multiplier.  
+///
+/// Ie 1.0 is the baseline "normal frequency", 0.9 is 90%, 1.10 110%, and so forth.
+#[derive(Debug, Clone, Copy)]
+pub struct MarkupFreq(pub f32);
+impl MarkupFreq {
+    /// The frequency cap for [`WordMarkup`], ensuring we don't truncate RNG variants and mess
+    /// up distribution mistakingly. The divisor should match the largest rng range used in the
+    /// Dummy impl.
+    const FREQ_CAP_WORD_MARKUP: f32 = 100. / 15.;
+}
+impl Default for MarkupFreq {
+    fn default() -> Self {
+        Self(1.)
+    }
+}
+impl Dummy<MarkupFreq> for WordMarkup {
+    fn dummy_with_rng<R: Rng + ?Sized>(&MarkupFreq(freq): &MarkupFreq, rng: &mut R) -> Self {
+        let freq = freq.min(MarkupFreq::FREQ_CAP_WORD_MARKUP);
+        match (0.0..100.).fake_with_rng::<f32, _>(rng) {
+            i if i < 2.5 * freq => Self::ItalicStar,
+            i if i < 5.0 * freq => Self::ItalicUnderscore,
+            i if i < 7.5 * freq => Self::BoldStar,
+            i if i < 10. * freq => Self::BoldUnderscore,
+            i if i < 12.5 * freq => Self::BoldItalicStar,
+            i if i < 15.0 * freq => Self::BoldItalicUnderscore,
             _ => Self::None,
         }
     }
@@ -47,10 +90,14 @@ where
 {
     fn dummy_with_rng<R: Rng + ?Sized>(config: &Sentence<L>, rng: &mut R) -> Self {
         let Sentence { locale } = *config;
-        // TODO: This should be `SentenceWord` to allow for iterative generation, rather than having
+        // NIT: This should be `SentenceWord` to allow for iterative generation, rather than having
         // to generate and the mutate.
-        let words: Vec<String> = locale::Sentence { locale }.fake_with_rng(rng);
-        todo!()
+        let mut words: Vec<String> = locale::Sentence { locale }.fake_with_rng(rng);
+        words.iter_mut().for_each(|word| {
+            let markup: WordMarkup = MarkupFreq::default().fake_with_rng(rng);
+            markup.format_string(word)
+        });
+        words
     }
 }
 
@@ -68,7 +115,7 @@ pub mod test {
             Sentence::<EnLocale>::default()
                 .fake_with_rng::<Vec<String>, _>(&mut rng)
                 .join(" "),
-            "foo"
+            "odit mollitia est culpa ut fugiat molestiae nam et sequi ___eum___ et dolor consequatur qui ullam **at**"
         );
     }
 }
