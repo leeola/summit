@@ -104,7 +104,7 @@ where
 #[cfg(test)]
 pub mod test {
     use super::*;
-    use crate::dev::fake::text::locale::en::EnLocale;
+    use crate::dev::fake::text::locale::en::EnLorem;
     use fake::Fake;
     use rand::{rngs::StdRng, SeedableRng};
 
@@ -112,7 +112,7 @@ pub mod test {
     fn markdown_sentence() {
         let mut rng = StdRng::seed_from_u64(0xDEADBEEF);
         assert_eq!(
-            Sentence::<EnLocale>::default()
+            Sentence::<EnLorem>::default()
                 .fake_with_rng::<Vec<String>, _>(&mut rng)
                 .join(" "),
             "odit mollitia est culpa ut fugiat molestiae nam et sequi ___eum___ et dolor consequatur qui ullam **at**"

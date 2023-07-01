@@ -63,17 +63,17 @@ pub enum Locale {
 impl LocaleText for Locale {
     fn words(&self) -> &'static [&'static str] {
         match self {
-            Locale::En => en::EnLocale.words(),
+            Locale::En => en::EnLorem.words(),
         }
     }
     fn sentences(&self) -> &'static [&'static str] {
         match self {
-            Locale::En => en::EnLocale.sentences(),
+            Locale::En => en::EnLorem.sentences(),
         }
     }
     fn punc(&self) -> &'static [&'static str] {
         match self {
-            Locale::En => en::EnLocale.punc(),
+            Locale::En => en::EnLorem.punc(),
         }
     }
 }
