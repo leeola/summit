@@ -1,22 +1,54 @@
 use fake::{faker::lorem, Dummy, Fake, Faker};
 use rand::{seq::SliceRandom, Rng};
-use std::fmt::Debug;
+use std::{fmt::Debug, iter};
 
 pub mod en;
 
+// TODO: Rename `Locale`
 pub trait LocaleText: Debug + Default + Copy {
+    fn words(&self) -> &'static [&'static str];
+    fn sentences(&self) -> &'static [&'static str];
     fn punc(&self) -> &'static [&'static str];
     fn with_fallback<F: LocaleText>(self, fallback: F) -> FallbackLocale<Self, F> {
         FallbackLocale {
-            outer: self,
-            inner: fallback,
+            primary: self,
+            fallback,
         }
     }
 }
 #[derive(Debug, Default, Clone, Copy)]
 pub struct FallbackLocale<Outer: LocaleText, Inner: LocaleText> {
-    pub outer: Outer,
-    pub inner: Inner,
+    pub primary: Outer,
+    pub fallback: Inner,
+}
+impl<O, I> LocaleText for FallbackLocale<O, I>
+where
+    O: LocaleText,
+    I: LocaleText,
+{
+    fn words(&self) -> &'static [&'static str] {
+        self.primary.words().is_empty_then(|| self.fallback.words())
+    }
+    fn sentences(&self) -> &'static [&'static str] {
+        self.primary
+            .sentences()
+            .is_empty_then(|| self.fallback.sentences())
+    }
+    fn punc(&self) -> &'static [&'static str] {
+        self.primary.punc().is_empty_then(|| self.fallback.punc())
+    }
+}
+trait IsEmptyThen<Rhs = Self> {
+    fn is_empty_then<F: Fn() -> Self>(&self, f: F) -> Self;
+}
+impl<T> IsEmptyThen for &[T] {
+    fn is_empty_then<F: Fn() -> Self>(&self, f: F) -> Self {
+        if self.is_empty() {
+            f()
+        } else {
+            self
+        }
+    }
 }
 
 /// An easier to configure value for locale generating [`Dummy`]s.
@@ -29,6 +61,16 @@ pub enum Locale {
     En,
 }
 impl LocaleText for Locale {
+    fn words(&self) -> &'static [&'static str] {
+        match self {
+            Locale::En => en::EnLocale.words(),
+        }
+    }
+    fn sentences(&self) -> &'static [&'static str] {
+        match self {
+            Locale::En => en::EnLocale.sentences(),
+        }
+    }
     fn punc(&self) -> &'static [&'static str] {
         match self {
             Locale::En => en::EnLocale.punc(),
@@ -47,6 +89,46 @@ impl Dummy<Punc> for &'static str {
 pub enum SentFrag {
     Word,
     Punc,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Sentence<L> {
+    pub locale: L,
+}
+impl<L> Default for Sentence<L>
+where
+    L: Default,
+{
+    fn default() -> Self {
+        Self {
+            locale: L::default(),
+        }
+    }
+}
+// TODO: Fake a `Word` (ish?) type which can include punc, markup, etc. Avoiding the requirement
+// that higher level primatives like Markdown have to style over a punc every time.
+impl<L> Dummy<Sentence<L>> for Vec<String>
+where
+    L: LocaleText,
+{
+    fn dummy_with_rng<R: Rng + ?Sized>(config: &Sentence<L>, rng: &mut R) -> Self {
+        // TODO: .. support a range lol.
+        let range = 1..20;
+        // TODO: Branch on Sentences, probably with ratios to randomly select between the two.
+        let words = config.locale.words();
+        iter::from_fn({
+            let word_limit = range.fake_with_rng(rng);
+            let mut i = 0;
+            move || {
+                if i >= word_limit {
+                    return None;
+                }
+                i += 1;
+                Some(words.choose(rng)?.to_string())
+            }
+        })
+        .collect()
+    }
 }
 
 pub struct Sent(pub Locale);
