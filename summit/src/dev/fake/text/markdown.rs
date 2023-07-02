@@ -100,6 +100,15 @@ where
         words
     }
 }
+impl<L> Dummy<Sentence<L>> for String
+where
+    L: LocaleText,
+{
+    fn dummy_with_rng<R: Rng + ?Sized>(config: &Sentence<L>, rng: &mut R) -> Self {
+        let words: Vec<String> = config.fake_with_rng(rng);
+        words.join(" ")
+    }
+}
 
 #[cfg(test)]
 pub mod test {

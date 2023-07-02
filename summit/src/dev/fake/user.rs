@@ -1,4 +1,7 @@
-use super::text::locale::Locale;
+use super::text::{
+    locale::{Locale, LocaleText},
+    markdown::Sentence,
+};
 use crate::{
     db::{Author, CreatePost},
     Summit,
@@ -86,13 +89,19 @@ impl Dummy<NewFakeUser> for FakeUser {
 
 pub struct FakeCreatePost<'a>(&'a FakeUser);
 impl Dummy<FakeCreatePost<'_>> for CreatePost {
-    fn dummy_with_rng<R: rand::Rng + ?Sized>(config: &FakeCreatePost<'_>, rng: &mut R) -> Self {
+    fn dummy_with_rng<R: rand::Rng + ?Sized>(
+        &FakeCreatePost(fake_user): &FakeCreatePost<'_>,
+        rng: &mut R,
+    ) -> Self {
+        let &FakeUser {
+            locale,
+            ref user,
+            rate_of_actions_secs,
+        } = fake_user;
         Self {
-            author: config.0.user.clone(),
-            title: Words(1..10).fake_with_rng::<Vec<String>, _>(rng).join(" "),
-            body: Words(2..1_000)
-                .fake_with_rng::<Vec<String>, _>(rng)
-                .join(" "),
+            author: fake_user.user.clone(),
+            title: Sentence { locale }.fake_with_rng::<String, _>(rng),
+            body: Sentence { locale }.fake_with_rng::<String, _>(rng),
         }
     }
 }
