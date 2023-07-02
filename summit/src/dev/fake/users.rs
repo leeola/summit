@@ -93,6 +93,7 @@ struct FakeUsersInner {
 impl FakeUsersInner {
     pub fn new_user(&mut self) -> FakeUserRt<impl Rng> {
         // TODO: Track users for management. For now just spinning them up and wishing them well.
+        let fake_user_index = self.count;
         self.count += 1;
         let new_user_seed: u64 = Faker.fake_with_rng(&mut self.user_creation_rng);
         FakeUserRt::new(
@@ -100,7 +101,7 @@ impl FakeUsersInner {
             Arc::clone(&self.summit),
             NewFakeUser {
                 config: self.config.clone(),
-                fake_user_count: self.count,
+                fake_user_index,
             },
         )
     }
@@ -108,5 +109,5 @@ impl FakeUsersInner {
 
 pub struct NewFakeUser {
     pub config: FakeUserInitConfig,
-    pub fake_user_count: u64,
+    pub fake_user_index: u64,
 }

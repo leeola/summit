@@ -1,9 +1,9 @@
-use super::text::locale::Locale;
+use super::text::{locale::Locale, markdown::Sentence};
 use crate::{
     db::{Author, CreatePost},
     Summit,
 };
-use fake::{faker::lorem::en::Words, Dummy, Fake, Faker};
+use fake::{Dummy, Fake, Faker};
 use std::{sync::Arc, time::Duration};
 use tracing::warn;
 
@@ -61,21 +61,32 @@ pub struct FakeUser {
 }
 impl Dummy<NewFakeUser> for FakeUser {
     fn dummy_with_rng<R: rand::Rng + ?Sized>(config: &NewFakeUser, rng: &mut R) -> Self {
-        let locale: Locale = Faker.fake_with_rng(rng);
+        let locale: Locale = {
+            // Always gen the locale, keeping rng consistent despite config.
+            let locale = Faker.fake_with_rng(rng);
+            if config.fake_user_index == 0 {
+                // The default for testing, should prob make this configurable but this works for
+                // now.
+                Locale::EnBob
+            } else {
+                locale
+            }
+        };
         let user = locale.fake_with_rng(rng);
         let rate_of_actions_frac: f64 = (0.01..1.0).fake_with_rng(rng);
         // First, calculate the secs based on the above fraction range. This makes it so that you
         // can configure (CLI/etc) the upper bound, ie the amount of spammy, without affecting which
         // users are spammy, which are slow, etc. Slow and spammy is all relative to the range.
-        let rate_of_actions_secs = ((config.config.rate_of_actions_secs_max as f64
-            * rate_of_actions_frac)
-            .round() as u64)
-            // ensure we never go below 1s spam
-            .max(1)
-            // Next, to help ensure the first users are spammy for testing, we apply a cap where as
-            // each user is created they're affected less and less by the cap.
-            .min(5 * config.fake_user_count);
-
+        let rate_of_actions_secs =
+            ((config.config.rate_of_actions_secs_max as f64 * rate_of_actions_frac).round() as u64)
+                .clamp(
+                    // ensure we never go below 1s spam
+                    1,
+                    // Next, to help ensure the first users are spammy for testing, we apply a cap
+                    // where as each user is created they're affected less and
+                    // less by the cap.
+                    5 * config.fake_user_index.max(1),
+                );
         Self {
             locale,
             user,
@@ -86,13 +97,15 @@ impl Dummy<NewFakeUser> for FakeUser {
 
 pub struct FakeCreatePost<'a>(&'a FakeUser);
 impl Dummy<FakeCreatePost<'_>> for CreatePost {
-    fn dummy_with_rng<R: rand::Rng + ?Sized>(config: &FakeCreatePost<'_>, rng: &mut R) -> Self {
+    fn dummy_with_rng<R: rand::Rng + ?Sized>(
+        &FakeCreatePost(fake_user): &FakeCreatePost<'_>,
+        rng: &mut R,
+    ) -> Self {
+        let &FakeUser { locale, .. } = fake_user;
         Self {
-            author: config.0.user.clone(),
-            title: Words(1..10).fake_with_rng::<Vec<String>, _>(rng).join(" "),
-            body: Words(2..1_000)
-                .fake_with_rng::<Vec<String>, _>(rng)
-                .join(" "),
+            author: fake_user.user.clone(),
+            title: Sentence { locale }.fake_with_rng::<String, _>(rng),
+            body: Sentence { locale }.fake_with_rng::<String, _>(rng),
         }
     }
 }

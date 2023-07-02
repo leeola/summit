@@ -13,6 +13,9 @@ impl Dummy<Name> for CompactString {
             Locale::En => faker::name::en::Name()
                 .fake_with_rng::<String, _>(rng)
                 .into(),
+            Locale::EnBob => faker::name::en::Name()
+                .fake_with_rng::<String, _>(rng)
+                .into(),
         }
     }
 }

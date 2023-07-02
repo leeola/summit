@@ -4,7 +4,37 @@ use std::{fmt::Debug, iter};
 
 pub mod en;
 
-// TODO: Rename `Locale`
+/// An easier to configure value for locale generating [`Dummy`]s.
+//
+// NIT: This makes dummy generation super verbose, need to find a way to make this more generic,
+// otherwise every dummy has a match that will be awful anytime a new lang variant is added.
+#[derive(Debug, Default, Clone, Copy, Dummy)]
+pub enum Locale {
+    #[default]
+    En,
+    EnBob,
+}
+impl LocaleText for Locale {
+    fn words(&self) -> &'static [&'static str] {
+        match self {
+            Locale::En => en::EnLorem.words(),
+            Locale::EnBob => en::EnBob.words(),
+        }
+    }
+    fn sentences(&self) -> &'static [&'static [&'static str]] {
+        match self {
+            Locale::En => en::EnLorem.sentences(),
+            Locale::EnBob => en::EnBob.sentences(),
+        }
+    }
+    fn punc(&self) -> &'static [&'static str] {
+        match self {
+            Locale::En => en::EnLorem.punc(),
+            Locale::EnBob => en::EnBob.punc(),
+        }
+    }
+}
+
 pub trait LocaleText: Debug + Default + Copy {
     fn words(&self) -> &'static [&'static str];
     fn sentences(&self) -> &'static [&'static [&'static str]];
@@ -51,33 +81,6 @@ impl<T> IsEmptyThen for &[T] {
     }
 }
 
-/// An easier to configure value for locale generating [`Dummy`]s.
-//
-// NIT: This makes dummy generation super verbose, need to find a way to make this more generic,
-// otherwise every dummy has a match that will be awful anytime a new lang variant is added.
-#[derive(Debug, Default, Clone, Copy, Dummy)]
-pub enum Locale {
-    #[default]
-    En,
-}
-impl LocaleText for Locale {
-    fn words(&self) -> &'static [&'static str] {
-        match self {
-            Locale::En => en::EnLorem.words(),
-        }
-    }
-    fn sentences(&self) -> &'static [&'static [&'static str]] {
-        match self {
-            Locale::En => en::EnLorem.sentences(),
-        }
-    }
-    fn punc(&self) -> &'static [&'static str] {
-        match self {
-            Locale::En => en::EnLorem.punc(),
-        }
-    }
-}
-
 pub struct Punc(pub Locale);
 impl Dummy<Punc> for &'static str {
     fn dummy_with_rng<R: Rng + ?Sized>(config: &Punc, rng: &mut R) -> Self {
@@ -114,20 +117,21 @@ where
     fn dummy_with_rng<R: Rng + ?Sized>(config: &Sentence<L>, rng: &mut R) -> Self {
         // TODO: .. support a range lol.
         let range = 1..20;
+        let word_limit: usize = range.fake_with_rng(rng);
         // TODO: Branch on Sentences, probably with ratios to randomly select between the two.
-        let words = config.locale.words();
-        iter::from_fn({
-            let word_limit = range.fake_with_rng(rng);
-            let mut i = 0;
-            move || {
-                if i >= word_limit {
-                    return None;
-                }
-                i += 1;
-                Some(words.choose(rng)?.to_string())
-            }
-        })
-        .collect()
+        let sentences = config.locale.sentences();
+        if !sentences.is_empty() {
+            iter::from_fn(|| Some(sentences.choose(rng)?))
+                .flat_map(|sent_words| sent_words.iter())
+                .map(|word| word.to_string())
+                .take(word_limit)
+                .collect()
+        } else {
+            let words = config.locale.words();
+            iter::from_fn(|| Some(words.choose(rng)?.to_string()))
+                .take(word_limit)
+                .collect()
+        }
     }
 }
 

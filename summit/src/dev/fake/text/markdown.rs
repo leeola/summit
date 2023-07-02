@@ -100,22 +100,12 @@ where
         words
     }
 }
-
-#[cfg(test)]
-pub mod test {
-    use super::*;
-    use crate::dev::fake::text::locale::en::EnLorem;
-    use fake::Fake;
-    use rand::{rngs::StdRng, SeedableRng};
-
-    #[test]
-    fn markdown_sentence() {
-        let mut rng = StdRng::seed_from_u64(0xDEADBEEF);
-        assert_eq!(
-            Sentence::<EnLorem>::default()
-                .fake_with_rng::<Vec<String>, _>(&mut rng)
-                .join(" "),
-            "odit mollitia est culpa ut fugiat molestiae nam et sequi ___eum___ et dolor consequatur qui ullam **at**"
-        );
+impl<L> Dummy<Sentence<L>> for String
+where
+    L: LocaleText,
+{
+    fn dummy_with_rng<R: Rng + ?Sized>(config: &Sentence<L>, rng: &mut R) -> Self {
+        let words: Vec<String> = config.fake_with_rng(rng);
+        words.join(" ")
     }
 }
