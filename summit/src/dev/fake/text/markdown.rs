@@ -45,6 +45,11 @@ impl Dummy<Faker> for WordMarkup {
 #[derive(Debug, Clone, Copy)]
 pub struct MarkupFreq(pub f32);
 impl MarkupFreq {
+    /// Drop the frequencies by a fixed amount, keeping the percentages consistence for ease of dev,
+    /// but allowing us to make them less spammy.
+    const GLOBAL_REDUCTION: f32 = 0.25;
+}
+impl MarkupFreq {
     /// The frequency cap for [`WordMarkup`], ensuring we don't truncate RNG variants and mess
     /// up distribution mistakingly. The divisor should match the largest rng range used in the
     /// Dummy impl.
@@ -58,13 +63,13 @@ impl Default for MarkupFreq {
 impl Dummy<MarkupFreq> for WordMarkup {
     fn dummy_with_rng<R: Rng + ?Sized>(&MarkupFreq(freq): &MarkupFreq, rng: &mut R) -> Self {
         let freq = freq.min(MarkupFreq::FREQ_CAP_WORD_MARKUP);
-        match (0.0..100.).fake_with_rng::<f32, _>(rng) {
-            i if i < 2.5 * freq => Self::ItalicStar,
-            i if i < 5.0 * freq => Self::ItalicUnderscore,
-            i if i < 7.5 * freq => Self::BoldStar,
-            i if i < 10. * freq => Self::BoldUnderscore,
-            i if i < 12.5 * freq => Self::BoldItalicStar,
-            i if i < 15.0 * freq => Self::BoldItalicUnderscore,
+        match (0.0..1.0).fake_with_rng::<f32, _>(rng) {
+            i if i < 0.025 * MarkupFreq::GLOBAL_REDUCTION * freq => Self::ItalicStar,
+            i if i < 0.050 * MarkupFreq::GLOBAL_REDUCTION * freq => Self::ItalicUnderscore,
+            i if i < 0.075 * MarkupFreq::GLOBAL_REDUCTION * freq => Self::BoldStar,
+            i if i < 0.100 * MarkupFreq::GLOBAL_REDUCTION * freq => Self::BoldUnderscore,
+            i if i < 0.125 * MarkupFreq::GLOBAL_REDUCTION * freq => Self::BoldItalicStar,
+            i if i < 0.150 * MarkupFreq::GLOBAL_REDUCTION * freq => Self::BoldItalicUnderscore,
             _ => Self::None,
         }
     }
@@ -94,7 +99,7 @@ where
         // to generate and the mutate.
         let mut words: Vec<String> = locale::Sentence(locale, range).fake_with_rng(rng);
         words.iter_mut().for_each(|word| {
-            let markup: WordMarkup = MarkupFreq(0.25).fake_with_rng(rng);
+            let markup: WordMarkup = MarkupFreq(1.0).fake_with_rng(rng);
             markup.format_string(word)
         });
         words
