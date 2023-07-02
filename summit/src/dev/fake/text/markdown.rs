@@ -1,3 +1,5 @@
+use std::ops::{RangeBounds, RangeTo};
+
 use super::locale::LocaleText;
 use crate::dev::fake::text::locale;
 use fake::{Dummy, Fake, Faker};
@@ -69,42 +71,42 @@ impl Dummy<MarkupFreq> for WordMarkup {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct Sentence<L> {
-    pub locale: L,
-}
-impl<L> Default for Sentence<L>
+pub struct Sentence<L, R>(pub L, pub R);
+impl<L> Default for Sentence<L, RangeTo<usize>>
 where
     L: Default,
 {
     fn default() -> Self {
-        Self {
-            locale: L::default(),
-        }
+        Self(L::default(), ..20)
     }
 }
 // TODO: Fake a `Word` (ish?) type which can include punc, markup, etc. Avoiding the requirement
 // that higher level primatives like Markdown have to style over a punc every time.
-impl<L> Dummy<Sentence<L>> for Vec<String>
+impl<L, R> Dummy<Sentence<L, R>> for Vec<String>
 where
     L: LocaleText,
+    R: RangeBounds<usize> + Copy,
+    usize: Dummy<R>,
 {
-    fn dummy_with_rng<R: Rng + ?Sized>(config: &Sentence<L>, rng: &mut R) -> Self {
-        let Sentence { locale } = *config;
+    fn dummy_with_rng<Rng: rand::Rng + ?Sized>(config: &Sentence<L, R>, rng: &mut Rng) -> Self {
+        let Sentence(locale, range) = *config;
         // NIT: This should be `SentenceWord` to allow for iterative generation, rather than having
         // to generate and the mutate.
-        let mut words: Vec<String> = locale::Sentence { locale }.fake_with_rng(rng);
+        let mut words: Vec<String> = locale::Sentence(locale, range).fake_with_rng(rng);
         words.iter_mut().for_each(|word| {
-            let markup: WordMarkup = MarkupFreq::default().fake_with_rng(rng);
+            let markup: WordMarkup = MarkupFreq(0.25).fake_with_rng(rng);
             markup.format_string(word)
         });
         words
     }
 }
-impl<L> Dummy<Sentence<L>> for String
+impl<L, R> Dummy<Sentence<L, R>> for String
 where
     L: LocaleText,
+    R: RangeBounds<usize> + Copy,
+    usize: Dummy<R>,
 {
-    fn dummy_with_rng<R: Rng + ?Sized>(config: &Sentence<L>, rng: &mut R) -> Self {
+    fn dummy_with_rng<Rng: rand::Rng + ?Sized>(config: &Sentence<L, R>, rng: &mut Rng) -> Self {
         let words: Vec<String> = config.fake_with_rng(rng);
         words.join(" ")
     }

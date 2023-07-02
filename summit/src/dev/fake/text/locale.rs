@@ -1,6 +1,10 @@
 use fake::{faker::lorem, Dummy, Fake, Faker};
 use rand::{seq::SliceRandom, Rng};
-use std::{fmt::Debug, iter};
+use std::{
+    fmt::Debug,
+    iter,
+    ops::{RangeBounds, RangeTo},
+};
 
 pub mod en;
 
@@ -95,31 +99,30 @@ pub enum SentFrag {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct Sentence<L> {
-    pub locale: L,
-}
-impl<L> Default for Sentence<L>
+pub struct Sentence<L, R>(pub L, pub R);
+impl<L> Default for Sentence<L, RangeTo<usize>>
 where
     L: Default,
 {
     fn default() -> Self {
-        Self {
-            locale: L::default(),
-        }
+        Self(L::default(), ..20)
     }
 }
 // TODO: Fake a `Word` (ish?) type which can include punc, markup, etc. Avoiding the requirement
 // that higher level primatives like Markdown have to style over a punc every time.
-impl<L> Dummy<Sentence<L>> for Vec<String>
+impl<L, R> Dummy<Sentence<L, R>> for Vec<String>
 where
     L: LocaleText,
+    R: RangeBounds<usize>,
+    usize: Dummy<R>,
 {
-    fn dummy_with_rng<R: Rng + ?Sized>(config: &Sentence<L>, rng: &mut R) -> Self {
-        // TODO: .. support a range lol.
-        let range = 1..20;
+    fn dummy_with_rng<Rng: rand::Rng + ?Sized>(
+        Sentence(locale, range): &Sentence<L, R>,
+        rng: &mut Rng,
+    ) -> Self {
         let word_limit: usize = range.fake_with_rng(rng);
         // TODO: Branch on Sentences, probably with ratios to randomly select between the two.
-        let sentences = config.locale.sentences();
+        let sentences = locale.sentences();
         if !sentences.is_empty() {
             iter::from_fn(|| Some(sentences.choose(rng)?))
                 .flat_map(|sent_words| sent_words.iter())
@@ -127,7 +130,7 @@ where
                 .take(word_limit)
                 .collect()
         } else {
-            let words = config.locale.words();
+            let words = locale.words();
             iter::from_fn(|| Some(words.choose(rng)?.to_string()))
                 .take(word_limit)
                 .collect()

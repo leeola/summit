@@ -104,8 +104,8 @@ impl Dummy<FakeCreatePost<'_>> for CreatePost {
         let &FakeUser { locale, .. } = fake_user;
         Self {
             author: fake_user.user.clone(),
-            title: Sentence { locale }.fake_with_rng::<String, _>(rng),
-            body: Sentence { locale }.fake_with_rng::<String, _>(rng),
+            title: Sentence(locale, ..20).fake_with_rng::<String, _>(rng),
+            body: Sentence(locale, ..200).fake_with_rng::<String, _>(rng),
         }
     }
 }
