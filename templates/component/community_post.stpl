@@ -1,6 +1,6 @@
 <article>
-  <h2><%= title %></h2>
-  <p><%= body %></p>
+  <h2><%- title_html %></h2>
+  <p><%- body_html %></p>
   <footer>
     Posted by <%+ author.fedi_addr %>
     on <time><%= created_on.to_local(user_tz) %></time>

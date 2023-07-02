@@ -17,6 +17,7 @@ path = "src/lib.rs"
 default = ["dev"]
 dev = ["dep:fake", "dep:rand"]
 local_dev = ["dev"]
+simd = ["pulldown-cmark/simd"]
 
 [dependencies]
 tokio = { workspace = true, features = ["rt-multi-thread", "macros", "signal"] }
@@ -42,6 +43,7 @@ bytesize = "1.2"
 uuid7 = "0.6"
 data-encoding = "2.4"
 data-encoding-macro = "0.1"
+pulldown-cmark = { version = "0.9", default-features = false, features = [] }
 
 # TODO: Bin only. Waiting on some RFCs/Issues before we make them optional.
 # - https://github.com/rust-lang/cargo/issues/1982

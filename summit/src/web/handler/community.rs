@@ -1,7 +1,7 @@
 use crate::{
     date_time::{DateTime, TimeZone},
     db::{Author, Post},
-    web::template::Template,
+    web::template::{MarkdownHtml, Template},
     Summit,
 };
 use axum::extract::State;
@@ -22,8 +22,8 @@ pub struct CommunityPost {
     pub user_tz: TimeZone,
     pub author: Author,
     pub created_on: DateTime,
-    pub title: String,
-    pub body: String,
+    pub title_html: MarkdownHtml,
+    pub body_html: MarkdownHtml,
 }
 impl CommunityPost {
     pub fn new(user_tz: TimeZone, post: Post) -> Self {
@@ -37,8 +37,8 @@ impl CommunityPost {
             user_tz,
             author,
             created_on,
-            title,
-            body,
+            title_html: title.into(),
+            body_html: body.into(),
         }
     }
 }
