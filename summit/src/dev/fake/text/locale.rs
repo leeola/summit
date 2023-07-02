@@ -7,7 +7,7 @@ pub mod en;
 // TODO: Rename `Locale`
 pub trait LocaleText: Debug + Default + Copy {
     fn words(&self) -> &'static [&'static str];
-    fn sentences(&self) -> &'static [&'static str];
+    fn sentences(&self) -> &'static [&'static [&'static str]];
     fn punc(&self) -> &'static [&'static str];
     fn with_fallback<F: LocaleText>(self, fallback: F) -> FallbackLocale<Self, F> {
         FallbackLocale {
@@ -29,7 +29,7 @@ where
     fn words(&self) -> &'static [&'static str] {
         self.primary.words().is_empty_then(|| self.fallback.words())
     }
-    fn sentences(&self) -> &'static [&'static str] {
+    fn sentences(&self) -> &'static [&'static [&'static str]] {
         self.primary
             .sentences()
             .is_empty_then(|| self.fallback.sentences())
@@ -66,7 +66,7 @@ impl LocaleText for Locale {
             Locale::En => en::EnLorem.words(),
         }
     }
-    fn sentences(&self) -> &'static [&'static str] {
+    fn sentences(&self) -> &'static [&'static [&'static str]] {
         match self {
             Locale::En => en::EnLorem.sentences(),
         }

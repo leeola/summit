@@ -256,7 +256,7 @@ impl LocaleText for EnLorem {
             "repellat",
         ]
     }
-    fn sentences(&self) -> &'static [&'static str] {
+    fn sentences(&self) -> &'static [&'static [&'static str]] {
         &[]
     }
     fn punc(&self) -> &'static [&'static str] {
