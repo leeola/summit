@@ -82,7 +82,7 @@ where
     L: Default,
 {
     fn default() -> Self {
-        Self(L::default(), ..20)
+        Self(L::default(), locale::Sentence::<L, _>::DEFAULT_RANGE)
     }
 }
 // TODO: Fake a `Word` (ish?) type which can include punc, markup, etc. Avoiding the requirement
@@ -90,11 +90,11 @@ where
 impl<L, R> Dummy<Sentence<L, R>> for Vec<String>
 where
     L: LocaleText,
-    R: RangeBounds<usize> + Copy,
+    R: RangeBounds<usize> + Clone,
     usize: Dummy<R>,
 {
     fn dummy_with_rng<Rng: rand::Rng + ?Sized>(config: &Sentence<L, R>, rng: &mut Rng) -> Self {
-        let Sentence(locale, range) = *config;
+        let Sentence(locale, range) = config.clone();
         // NIT: This should be `SentenceWord` to allow for iterative generation, rather than having
         // to generate and the mutate.
         let mut words: Vec<String> = locale::Sentence(locale, range).fake_with_rng(rng);
@@ -108,7 +108,7 @@ where
 impl<L, R> Dummy<Sentence<L, R>> for String
 where
     L: LocaleText,
-    R: RangeBounds<usize> + Copy,
+    R: RangeBounds<usize> + Clone,
     usize: Dummy<R>,
 {
     fn dummy_with_rng<Rng: rand::Rng + ?Sized>(config: &Sentence<L, R>, rng: &mut Rng) -> Self {

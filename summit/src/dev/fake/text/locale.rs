@@ -100,16 +100,25 @@ pub enum SentFrag {
 
 #[derive(Debug, Clone, Copy)]
 pub struct Sentence<L, R>(pub L, pub R);
+impl<L> Sentence<L, RangeTo<usize>> {
+    /// The range used as default for this type, exposed for other similar types to keep consistency
+    /// with this as a base.
+    pub const DEFAULT_RANGE: RangeTo<usize> = ..6;
+}
 impl<L> Default for Sentence<L, RangeTo<usize>>
 where
     L: Default,
 {
     fn default() -> Self {
-        Self(L::default(), ..20)
+        Self(L::default(), Self::DEFAULT_RANGE)
     }
 }
 // TODO: Fake a `Word` (ish?) type which can include punc, markup, etc. Avoiding the requirement
 // that higher level primatives like Markdown have to style over a punc every time.
+//
+// NIT: This should probably be a `Vec<Vec<_>>` by default, but Vec<String> is still desired in the
+// common case i think. When we eventually start using lossless `Word` instead of `String` this
+// could be converted to being sentences, too.
 impl<L, R> Dummy<Sentence<L, R>> for Vec<String>
 where
     L: LocaleText,
@@ -120,19 +129,23 @@ where
         Sentence(locale, range): &Sentence<L, R>,
         rng: &mut Rng,
     ) -> Self {
-        let word_limit: usize = range.fake_with_rng(rng);
+        let sent_limit: usize = range.fake_with_rng(rng);
         // TODO: Branch on Sentences, probably with ratios to randomly select between the two.
         let sentences = locale.sentences();
         if !sentences.is_empty() {
-            iter::from_fn(|| Some(sentences.choose(rng)?))
+            iter::from_fn(|| sentences.choose(rng))
+                .take(sent_limit)
                 .flat_map(|sent_words| sent_words.iter())
                 .map(|word| word.to_string())
-                .take(word_limit)
                 .collect()
         } else {
             let words = locale.words();
-            iter::from_fn(|| Some(words.choose(rng)?.to_string()))
-                .take(word_limit)
+            iter::from_fn(|| Some(3..15))
+                .take(sent_limit)
+                .flat_map(|iter| iter)
+                .map(|_| words.choose(rng).clone())
+                .map_while(|word_opt| word_opt)
+                .map(|word| word.to_string())
                 .collect()
         }
     }
