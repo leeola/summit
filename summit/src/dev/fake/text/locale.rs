@@ -25,6 +25,24 @@ impl LocaleText for Locale {
             Locale::EnBob => en::EnBob.words(),
         }
     }
+    fn adjectives(&self) -> &'static [&'static str] {
+        match self {
+            Locale::En => en::EnLorem.adjectives(),
+            Locale::EnBob => en::EnBob.adjectives(),
+        }
+    }
+    fn nouns(&self) -> &'static [&'static str] {
+        match self {
+            Locale::En => en::EnLorem.nouns(),
+            Locale::EnBob => en::EnBob.nouns(),
+        }
+    }
+    fn verbs(&self) -> &'static [&'static str] {
+        match self {
+            Locale::En => en::EnLorem.verbs(),
+            Locale::EnBob => en::EnBob.verbs(),
+        }
+    }
     fn sentences(&self) -> &'static [&'static [&'static str]] {
         match self {
             Locale::En => en::EnLorem.sentences(),
@@ -41,6 +59,9 @@ impl LocaleText for Locale {
 
 pub trait LocaleText: Debug + Default + Copy {
     fn words(&self) -> &'static [&'static str];
+    fn adjectives(&self) -> &'static [&'static str];
+    fn nouns(&self) -> &'static [&'static str];
+    fn verbs(&self) -> &'static [&'static str];
     fn sentences(&self) -> &'static [&'static [&'static str]];
     fn punc(&self) -> &'static [&'static str];
     fn with_fallback<F: LocaleText>(self, fallback: F) -> FallbackLocale<Self, F> {
@@ -62,6 +83,17 @@ where
 {
     fn words(&self) -> &'static [&'static str] {
         self.primary.words().is_empty_then(|| self.fallback.words())
+    }
+    fn adjectives(&self) -> &'static [&'static str] {
+        self.primary
+            .adjectives()
+            .is_empty_then(|| self.fallback.adjectives())
+    }
+    fn nouns(&self) -> &'static [&'static str] {
+        self.primary.nouns().is_empty_then(|| self.fallback.nouns())
+    }
+    fn verbs(&self) -> &'static [&'static str] {
+        self.primary.verbs().is_empty_then(|| self.fallback.verbs())
     }
     fn sentences(&self) -> &'static [&'static [&'static str]] {
         self.primary
@@ -88,7 +120,7 @@ impl<T> IsEmptyThen for &[T] {
 pub struct Punc(pub Locale);
 impl Dummy<Punc> for &'static str {
     fn dummy_with_rng<R: Rng + ?Sized>(config: &Punc, rng: &mut R) -> Self {
-        config.0.punc().choose(rng).unwrap()
+        config.0.punc().choose(rng).copied().unwrap_or(".")
     }
 }
 

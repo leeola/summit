@@ -2710,6 +2710,116 @@ const BOB_SENTENCE_WORDS: [&'static [&'static str]; 403] = [
     ],
     &["Zip.", "That", "easy."],
 ];
+const BOB_ADJECTIVES: [&'static str; 49] = [
+    "Peaceful",
+    "Tranquil",
+    "Serene",
+    "Calm",
+    "Soothing",
+    "Gentle",
+    "Quiet",
+    "Majestic",
+    "Mystical",
+    "Radiant",
+    "Dreamy",
+    "Enchanting",
+    "Distant",
+    "Bright",
+    "Cozy",
+    "Soft",
+    "Harmonious",
+    "Mellow",
+    "Happy",
+    "Whimsical",
+    "Rustic",
+    "Delicate",
+    "Misty",
+    "Golden",
+    "Shimmering",
+    "Gleaming",
+    "Whispering",
+    "Vibrant",
+    "Lush",
+    "Luminous",
+    "Glistening",
+    "Wistful",
+    "Ethereal",
+    "Sapphire",
+    "Silent",
+    "Crisp",
+    "Frosted",
+    "Twinkling",
+    "Glowing",
+    "Wandering",
+    "Verdant",
+    "Blossoming",
+    "Cool",
+    "Drifting",
+    "Dappled",
+    "Sundrenched",
+    "Twilight",
+    "Midnight",
+    "Scented",
+];
+const BOB_NOUNS: [&'static str; 49] = [
+    "Cloud",
+    "Meadow",
+    "Sunset",
+    "Breeze",
+    "Mountain",
+    "River",
+    "Pine",
+    "Sky",
+    "Trail",
+    "Cabin",
+    "Forest",
+    "Brook",
+    "Willow",
+    "Mist",
+    "Horizon",
+    "Valley",
+    "Canvas",
+    "Palette",
+    "Waterfall",
+    "Lake",
+    "Sunrise",
+    "Star",
+    "Moon",
+    "Creek",
+    "Birch",
+    "Fir",
+    "Cedar",
+    "Oasis",
+    "Rain",
+    "Snowflake",
+    "Prairie",
+    "Falls",
+    "Cliff",
+    "Peak",
+    "Dune",
+    "Tundra",
+    "Stream",
+    "Marsh",
+    "Thicket",
+    "Glade",
+    "Orchard",
+    "Grove",
+    "Vista",
+    "Lagoon",
+    "Hill",
+    "Island",
+    "Pond",
+    "Heath",
+    "Field",
+];
+const BOB_VERBS: [&'static str; 49] = [
+    "Whisper", "Glow", "Cascade", "Flow", "Drift", "Shimmer", "Glisten", "Reflect", "Bloom",
+    "Sprout", "Swirl", "Sway", "Ripple", "Dance", "Twinkle", "Sparkle", "Murmur", "Gleam",
+    "Quiver", "Flutter", "Glide", "Wander", "Soar", "Drizzle", "Shine", "Breathe", "Blossom",
+    "Rustle", "Flicker", "Gush", "Radiate", "Gaze", "Dream", "Sprinkle", "Glimmer", "Float",
+    "Pulse", "Rise", "Set", "Calm", "Grow", "Rest", "Emerge", "Stream", "Echo", "Meander", "Sing",
+    "Graze", "Shade",
+];
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct EnBob;
@@ -2717,10 +2827,32 @@ impl LocaleText for EnBob {
     fn words(&self) -> &'static [&'static str] {
         EnLorem.words()
     }
+    fn adjectives(&self) -> &'static [&'static str] {
+        &BOB_ADJECTIVES
+    }
+    fn nouns(&self) -> &'static [&'static str] {
+        &BOB_NOUNS
+    }
+    fn verbs(&self) -> &'static [&'static str] {
+        &BOB_VERBS
+    }
     fn sentences(&self) -> &'static [&'static [&'static str]] {
         &BOB_SENTENCE_WORDS
     }
     fn punc(&self) -> &'static [&'static str] {
         EnLorem.punc()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::collections::BTreeSet;
+
+    #[test]
+    fn dupes() {
+        assert_eq!(BOB_ADJECTIVES.iter().collect::<BTreeSet<_>>().len(), 49);
+        assert_eq!(BOB_NOUNS.iter().collect::<BTreeSet<_>>().len(), 49);
+        assert_eq!(BOB_VERBS.iter().collect::<BTreeSet<_>>().len(), 49);
     }
 }
