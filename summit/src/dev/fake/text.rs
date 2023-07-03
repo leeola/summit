@@ -1,5 +1,5 @@
 use self::locale::{Locale, LocaleText};
-use compact_str::CompactString;
+use compact_str::{format_compact, CompactString};
 use fake::{faker, Dummy, Fake, Faker};
 use rand::{seq::SliceRandom, Rng};
 
@@ -115,6 +115,7 @@ impl Dummy<FediUserName> for CompactString {
         let adj = locale.adjectives().choose(rng).copied().unwrap_or("");
         let noun = locale.nouns().choose(rng).copied().unwrap_or("");
         let verb = locale.verbs().choose(rng).copied().unwrap_or("");
+        // TODO: generate random number suffix, randomly existing.
         Faker
             .fake_with_rng::<NameJoinStyle, _>(rng)
             .join(&[adj, noun, verb], rng)
@@ -124,8 +125,19 @@ impl Dummy<FediUserName> for CompactString {
 #[derive(Debug, Clone, Copy)]
 pub struct FediHostName(pub Locale);
 impl Dummy<FediHostName> for CompactString {
-    fn dummy_with_rng<R: Rng + ?Sized>(config: &FediHostName, rng: &mut R) -> Self {
-        // TODO: convert this to a host. Prob add a URL type and generate for that?
-        Name(config.0).fake_with_rng(rng)
+    fn dummy_with_rng<R: Rng + ?Sized>(&FediHostName(locale): &FediHostName, rng: &mut R) -> Self {
+        let adj = locale.adjectives().choose(rng).copied().unwrap_or("");
+        let noun = locale.nouns().choose(rng).copied().unwrap_or("");
+        let suffix = locale
+            .verbs()
+            .choose(rng)
+            .map(|s| s.to_lowercase())
+            .unwrap_or(String::from("example"));
+        let host_name = Faker
+            .fake_with_rng::<bool, _>(rng)
+            .then(|| NameJoinStyle::AllLowerHyphen)
+            .unwrap_or(NameJoinStyle::AllLowerUnderscore)
+            .join(&[adj, noun], rng);
+        format_compact!("{host_name}.{suffix}")
     }
 }
