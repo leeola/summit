@@ -103,11 +103,7 @@ impl FakeUsers {
             return Ok(());
         }
         info!(ff_by_ticks, "fast forwarding fake user runtime");
-        let mut users = self
-            .0
-            .try_lock()
-            // nuke the mutex error lifetime.
-            .map_err(|err| anyhow!("{err:?}"))?;
+        let mut users = self.0.lock().await;
         for tick in 0..ff_by_ticks {
             users
                 .tick_users(tick)
@@ -125,12 +121,7 @@ impl FakeUsers {
         let mut prev_tick = Instant::now();
         for tick in 0.. {
             let res: anyhow::Result<()> = async {
-                self.0
-                    .try_lock()
-                    // nuke the mutex error lifetime.
-                    .map_err(|err| anyhow!("{err:?}"))?
-                    .tick_users(tick)
-                    .await?;
+                self.0.lock().await.tick_users(tick).await?;
                 let now = Instant::now();
                 let elapsed = now.duration_since(prev_tick);
                 if let Some(wait_for) = tick_rate.checked_sub(elapsed) {
