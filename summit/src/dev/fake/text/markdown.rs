@@ -1,9 +1,11 @@
-use std::ops::{RangeBounds, RangeTo};
-
 use super::locale::LocaleText;
 use crate::dev::fake::text::locale;
 use fake::{Dummy, Fake, Faker};
 use rand::Rng;
+use std::{
+    iter,
+    ops::{Range, RangeBounds, RangeTo},
+};
 
 #[derive(Debug, Default, Clone, Copy)]
 pub enum WordMarkup {
@@ -77,6 +79,11 @@ impl Dummy<MarkupFreq> for WordMarkup {
 
 #[derive(Debug, Clone, Copy)]
 pub struct Sentence<L, R>(pub L, pub R);
+impl<L> Sentence<L, RangeTo<usize>> {
+    pub fn locale(locale: L) -> Self {
+        Self(locale, locale::Sentence::<L, _>::DEFAULT_RANGE)
+    }
+}
 impl<L> Default for Sentence<L, RangeTo<usize>>
 where
     L: Default,
@@ -114,5 +121,48 @@ where
     fn dummy_with_rng<Rng: rand::Rng + ?Sized>(config: &Sentence<L, R>, rng: &mut Rng) -> Self {
         let words: Vec<String> = config.fake_with_rng(rng);
         words.join(" ")
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Paragraph<L, R>(pub L, pub R);
+impl<L> Paragraph<L, Range<usize>> {}
+impl<L> Default for Paragraph<L, Range<usize>>
+where
+    L: Default,
+{
+    fn default() -> Self {
+        Self(L::default(), 1..3)
+    }
+}
+impl<L, R> Dummy<Paragraph<L, R>> for Vec<String>
+where
+    L: LocaleText,
+    R: RangeBounds<usize> + Clone,
+    usize: Dummy<R>,
+{
+    fn dummy_with_rng<Rng: rand::Rng + ?Sized>(paragraph: &Paragraph<L, R>, rng: &mut Rng) -> Self {
+        let Paragraph(locale, range) = paragraph.clone();
+        let limit: usize = range.fake_with_rng(rng);
+        iter::from_fn(|| Some(Sentence::locale(locale).fake_with_rng::<Vec<String>, Rng>(rng)))
+            .take(limit)
+            .flat_map(|words| words)
+            .collect()
+    }
+}
+impl<L, R> Dummy<Paragraph<L, R>> for String
+where
+    L: LocaleText,
+    R: RangeBounds<usize> + Clone,
+    usize: Dummy<R>,
+{
+    fn dummy_with_rng<Rng: rand::Rng + ?Sized>(paragraph: &Paragraph<L, R>, rng: &mut Rng) -> Self {
+        let Paragraph(locale, range) = paragraph.clone();
+        let limit: usize = range.fake_with_rng(rng);
+        let words =
+            iter::from_fn(|| Some(Sentence(locale, 2..=10).fake_with_rng::<String, Rng>(rng)))
+                .take(limit)
+                .collect::<Vec<_>>();
+        words.join("\n\n")
     }
 }

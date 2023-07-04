@@ -1,4 +1,7 @@
-use super::text::{locale::Locale, markdown::Sentence};
+use super::text::{
+    locale::Locale,
+    markdown::{Paragraph, Sentence},
+};
 use crate::{
     db::{Author, CreatePost},
     Summit,
@@ -105,7 +108,7 @@ impl Dummy<FakeCreatePost<'_>> for CreatePost {
         Self {
             author: fake_user.user.clone(),
             title: Sentence(locale, 1..2).fake_with_rng::<String, _>(rng),
-            body: Sentence(locale, 1..=8).fake_with_rng::<String, _>(rng),
+            body: Paragraph(locale, 1..=10).fake_with_rng::<String, _>(rng),
         }
     }
 }
