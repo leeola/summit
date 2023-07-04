@@ -87,7 +87,9 @@ impl Dummy<NewFakeUser> for FakeUser {
                 // Next, to help ensure the first users are spammy for testing, we apply a cap
                 // where as each user is created they're affected less and
                 // less by the cap.
-                5.0 * config.fake_user_index.max(1) as f32,
+                //
+                // +1 to one-index the math.
+                5.0 * (config.fake_user_index + 1) as f32,
             );
         let tick_rate = (rate_of_actions_secs as f32 * 1000. / config.config.tick_dur.max(1) as f32)
             .round() as u64;
