@@ -160,7 +160,7 @@ impl FakeUsersInner {
         );
         warn!(
             fake_user = ?user.fake_user.user.fedi_addr.format(),
-            rate_of_actions_secs = user.fake_user.rate_of_actions_secs,
+            tick_rate = user.fake_user.tick_rate,
             "creating fake user",
         );
         self.users.push(user);

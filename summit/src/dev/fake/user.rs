@@ -31,7 +31,7 @@ impl<R: rand::Rng> FakeUserRt<R> {
     /// Construct a new user with fake parameters generated from the given seed.
     pub fn new(mut rng: R, summit: Arc<Summit>, new_fake_user: NewFakeUser) -> Self {
         let fake_user: FakeUser = new_fake_user.fake_with_rng(&mut rng);
-        let next_tick = fake_user.rate_of_actions_secs;
+        let next_tick = fake_user.tick_rate;
         Self {
             rng,
             summit,
@@ -43,7 +43,7 @@ impl<R: rand::Rng> FakeUserRt<R> {
         if tick < self.next_tick {
             return Ok(());
         }
-        self.next_tick += self.fake_user.rate_of_actions_secs;
+        self.next_tick += self.fake_user.tick_rate;
         if let Err(err) = self.action().await {
             warn!(?err, "encountered error faking user action");
         }
@@ -60,7 +60,7 @@ impl<R: rand::Rng> FakeUserRt<R> {
 pub struct FakeUser {
     pub locale: Locale,
     pub user: Author,
-    pub rate_of_actions_secs: u64,
+    pub tick_rate: u64,
 }
 impl Dummy<NewFakeUser> for FakeUser {
     fn dummy_with_rng<R: rand::Rng + ?Sized>(config: &NewFakeUser, rng: &mut R) -> Self {
@@ -76,24 +76,25 @@ impl Dummy<NewFakeUser> for FakeUser {
             }
         };
         let user = locale.fake_with_rng(rng);
-        let rate_of_actions_frac: f64 = (0.01..1.0).fake_with_rng(rng);
+        let rate_of_actions_frac: f32 = (0.01..1.0).fake_with_rng(rng);
         // First, calculate the secs based on the above fraction range. This makes it so that you
         // can configure (CLI/etc) the upper bound, ie the amount of spammy, without affecting which
         // users are spammy, which are slow, etc. Slow and spammy is all relative to the range.
         let rate_of_actions_secs =
-            ((config.config.rate_of_actions_secs_max as f64 * rate_of_actions_frac).round() as u64)
-                .clamp(
-                    // ensure we never go below 1s spam
-                    1,
-                    // Next, to help ensure the first users are spammy for testing, we apply a cap
-                    // where as each user is created they're affected less and
-                    // less by the cap.
-                    5 * config.fake_user_index.max(1),
-                );
+            (config.config.rate_of_actions_secs_max as f32 * rate_of_actions_frac).clamp(
+                // ensure we never go below 1s spam
+                1.,
+                // Next, to help ensure the first users are spammy for testing, we apply a cap
+                // where as each user is created they're affected less and
+                // less by the cap.
+                5.0 * config.fake_user_index.max(1) as f32,
+            );
+        let tick_rate = (rate_of_actions_secs as f32 * 1000. / config.config.tick_dur.max(1) as f32)
+            .round() as u64;
         Self {
             locale,
             user,
-            rate_of_actions_secs,
+            tick_rate,
         }
     }
 }
