@@ -7,7 +7,7 @@ use crate::{
     Summit,
 };
 use fake::{Dummy, Fake, Faker};
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 use tracing::warn;
 
 // temp compat.
@@ -25,29 +25,29 @@ pub struct FakeUserRt<R> {
     pub rng: R,
     pub summit: Arc<Summit>,
     pub fake_user: FakeUser,
+    pub next_tick: u64,
 }
 impl<R: rand::Rng> FakeUserRt<R> {
     /// Construct a new user with fake parameters generated from the given seed.
     pub fn new(mut rng: R, summit: Arc<Summit>, new_fake_user: NewFakeUser) -> Self {
-        let fake_user = new_fake_user.fake_with_rng(&mut rng);
+        let fake_user: FakeUser = new_fake_user.fake_with_rng(&mut rng);
+        let next_tick = fake_user.rate_of_actions_secs;
         Self {
             rng,
             summit,
             fake_user,
+            next_tick,
         }
     }
-    pub async fn start(mut self) {
-        warn!(
-            fake_user = ?self.fake_user.user.fedi_addr.format(),
-            rate_of_actions_secs = self.fake_user.rate_of_actions_secs,
-            "starting fake user",
-        );
-        loop {
-            tokio::time::sleep(Duration::from_secs(self.fake_user.rate_of_actions_secs)).await;
-            if let Err(err) = self.action().await {
-                warn!(?err, "encountered error faking user action");
-            }
+    pub async fn tick(&mut self, tick: u64) -> crate::Result<()> {
+        if tick < self.next_tick {
+            return Ok(());
         }
+        self.next_tick += self.fake_user.rate_of_actions_secs;
+        if let Err(err) = self.action().await {
+            warn!(?err, "encountered error faking user action");
+        }
+        return Ok(());
     }
     async fn action(&mut self) -> crate::Result<()> {
         self.summit

@@ -3,12 +3,13 @@ use crate::Summit;
 use anyhow::anyhow;
 use clap::Parser;
 use fake::{Fake, Faker};
-use rand::{rngs::StdRng, Rng, RngCore, SeedableRng};
+use rand::{rngs::StdRng, RngCore, SeedableRng};
 use std::{
-    sync::{Arc, Mutex},
-    time::Duration,
+    sync::Arc,
+    time::{Duration, Instant},
 };
-use tracing::warn;
+use tokio::sync::Mutex;
+use tracing::{error, info, warn};
 
 #[derive(Parser, Debug, Default, Clone)]
 pub struct FakeUserInitConfig {
@@ -21,11 +22,22 @@ pub struct FakeUserInitConfig {
     #[arg(long, default_value_t = 1)]
     pub fake_count: u16,
     /// The delay on startup user creation, if [`Self::fake_user_startup_count`] is > 0.
-    #[arg(long, default_value_t = 2)]
-    pub start_on_init_delay_secs: u64,
+    #[arg(long, default_value_t = 0)]
+    pub start_on_init_delay_ms: u64,
     /// The maximum delay in seconds that fake users will end up with.
     #[arg(long, default_value_t = 60)]
     pub rate_of_actions_secs_max: u64,
+    /// Advance the ticks of any active fake users at startup. This can be delayed via
+    /// [`Self::start_on_init_delay_ms`].
+    #[arg(long, default_value_t = 0)]
+    pub ff_ticks: u64,
+    /// In milliseconds, interval duration each tick must take to run, at a minimum. Ticks may
+    /// exceed this time.
+    #[arg(long, default_value_t = 2500)]
+    pub tick_dur: u64,
+    /// Don't start the fake user runtime, but users may still be created or advanced.
+    #[arg(long)]
+    pub dont_start_runtime: bool,
 }
 impl FakeUserInitConfig {
     /// Initialize fake users over the given Summit instance.
@@ -37,9 +49,9 @@ impl FakeUserInitConfig {
             let config = self.clone();
             let f = Arc::clone(&f);
             tokio::spawn(async move {
-                tokio::time::sleep(Duration::from_secs(config.start_on_init_delay_secs)).await;
+                tokio::time::sleep(Duration::from_millis(config.start_on_init_delay_ms)).await;
                 for fake_user_index in 0..config.fake_count {
-                    if let Err(err) = f.new_and_start().await {
+                    if let Err(err) = f.new_user().await {
                         warn!(
                             fake_user_index,
                             out_of = config.fake_count,
@@ -47,8 +59,16 @@ impl FakeUserInitConfig {
                             "failed to create fake user at startup"
                         );
                     }
-                    // A slight pause to make initial user creation log readable.. ish.
-                    tokio::time::sleep(Duration::from_millis(100)).await;
+                }
+                if let Err(err) = f.fastforward_runtime(config.ff_ticks).await {
+                    error!(?err, "advancing fake user runtime failed");
+                }
+                if !config.dont_start_runtime {
+                    if let Err(err) = f.start_runtime(config.tick_dur).await {
+                        error!(?err, "fake user runtime exited");
+                    } else {
+                        error!("fake user runtime exited");
+                    }
                 }
             });
         }
@@ -65,22 +85,55 @@ impl FakeUsers {
                 config: config.clone(),
                 count: 0,
                 summit,
+                users: Default::default(),
             }
             .into(),
         )
     }
-    pub async fn new_and_start(&self) -> anyhow::Result<()> {
-        // No reason to do any "fancy" locking here, a simple try-lock will suffice i imagine,
-        // failing to spin up a fake user in the (currently impossible) occurance of contention on
-        // inner.
-        let fake_user = {
+    pub async fn new_user(&self) -> anyhow::Result<()> {
+        self.0
+            .try_lock()
+            // nuke the mutex error lifetime.
+            .map_err(|err| anyhow!("{err:?}"))?
+            .new_user();
+        Ok(())
+    }
+    pub async fn fastforward_runtime(&self, ff_by_ticks: u64) -> anyhow::Result<()> {
+        if ff_by_ticks == 0 {
+            return Ok(());
+        }
+        info!(ff_by_ticks, "fast forwarding fake user runtime");
+        let mut users = self
+            .0
+            .try_lock()
+            // nuke the mutex error lifetime.
+            .map_err(|err| anyhow!("{err:?}"))?;
+        for tick in 0..ff_by_ticks {
+            users.tick_users(tick).await?;
+        }
+        Ok(())
+    }
+    // NIT: Make this runtime move..? I don't want it to start twice, iirc it was shared to pass
+    // state to the web server for remote control, but a shutdown channel is probably all that's
+    // necesary.
+    pub async fn start_runtime(&self, tick_rate_millis: u64) -> anyhow::Result<()> {
+        info!(tick_rate_millis, "starting fake user runtime");
+        let tick_rate = Duration::from_millis(tick_rate_millis);
+        let mut prev_tick = Instant::now();
+        for tick in 0.. {
             self.0
                 .try_lock()
                 // nuke the mutex error lifetime.
                 .map_err(|err| anyhow!("{err:?}"))?
-                .new_user()
-        };
-        tokio::spawn(async move { fake_user.start().await });
+                .tick_users(tick)
+                .await?;
+            let now = Instant::now();
+            let elapsed = now.duration_since(prev_tick);
+            if let Some(wait_for) = tick_rate.checked_sub(elapsed) {
+                tokio::time::sleep(wait_for).await;
+            }
+            prev_tick = now;
+        }
         Ok(())
     }
 }
@@ -89,21 +142,34 @@ struct FakeUsersInner {
     config: FakeUserInitConfig,
     count: u64,
     summit: Arc<Summit>,
+    users: Vec<FakeUserRt<StdRng>>,
 }
 impl FakeUsersInner {
-    pub fn new_user(&mut self) -> FakeUserRt<impl Rng> {
+    pub fn new_user(&mut self) {
         // TODO: Track users for management. For now just spinning them up and wishing them well.
         let fake_user_index = self.count;
         self.count += 1;
         let new_user_seed: u64 = Faker.fake_with_rng(&mut self.user_creation_rng);
-        FakeUserRt::new(
+        let user = FakeUserRt::new(
             StdRng::seed_from_u64(new_user_seed),
             Arc::clone(&self.summit),
             NewFakeUser {
                 config: self.config.clone(),
                 fake_user_index,
             },
-        )
+        );
+        warn!(
+            fake_user = ?user.fake_user.user.fedi_addr.format(),
+            rate_of_actions_secs = user.fake_user.rate_of_actions_secs,
+            "creating fake user",
+        );
+        self.users.push(user);
+    }
+    pub async fn tick_users(&mut self, tick: u64) -> anyhow::Result<()> {
+        for user in self.users.iter_mut() {
+            user.tick(tick).await?;
+        }
+        Ok(())
     }
 }
 
