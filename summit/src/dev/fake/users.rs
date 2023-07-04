@@ -9,7 +9,7 @@ use std::{
     time::{Duration, Instant},
 };
 use tokio::sync::Mutex;
-use tracing::{error, info, warn};
+use tracing::{debug_span, error, info, warn, Instrument};
 
 #[derive(Parser, Debug, Default, Clone)]
 pub struct FakeUserInitConfig {
@@ -109,7 +109,10 @@ impl FakeUsers {
             // nuke the mutex error lifetime.
             .map_err(|err| anyhow!("{err:?}"))?;
         for tick in 0..ff_by_ticks {
-            users.tick_users(tick).await?;
+            users
+                .tick_users(tick)
+                .instrument(debug_span!("ff tick", tick))
+                .await?;
         }
         Ok(())
     }
@@ -121,18 +124,24 @@ impl FakeUsers {
         let tick_rate = Duration::from_millis(tick_rate_millis);
         let mut prev_tick = Instant::now();
         for tick in 0.. {
-            self.0
-                .try_lock()
-                // nuke the mutex error lifetime.
-                .map_err(|err| anyhow!("{err:?}"))?
-                .tick_users(tick)
-                .await?;
-            let now = Instant::now();
-            let elapsed = now.duration_since(prev_tick);
-            if let Some(wait_for) = tick_rate.checked_sub(elapsed) {
-                tokio::time::sleep(wait_for).await;
+            let res: anyhow::Result<()> = async {
+                self.0
+                    .try_lock()
+                    // nuke the mutex error lifetime.
+                    .map_err(|err| anyhow!("{err:?}"))?
+                    .tick_users(tick)
+                    .await?;
+                let now = Instant::now();
+                let elapsed = now.duration_since(prev_tick);
+                if let Some(wait_for) = tick_rate.checked_sub(elapsed) {
+                    tokio::time::sleep(wait_for).await;
+                }
+                prev_tick = now;
+                Ok(())
             }
-            prev_tick = now;
+            .instrument(debug_span!("rt tick", tick))
+            .await;
+            res?;
         }
         Ok(())
     }
