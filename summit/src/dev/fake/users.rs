@@ -116,7 +116,7 @@ impl FakeUsers {
     // state to the web server for remote control, but a shutdown channel is probably all that's
     // necesary.
     pub async fn start_runtime(&self, tick_rate_ms: u64) -> anyhow::Result<()> {
-        info!(tick_rate_ms, "starting fake user runtime");
+        warn!(tick_rate_ms, "starting fake user runtime");
         let tick_rate = Duration::from_millis(tick_rate_ms);
         let mut prev_tick = Instant::now();
         for tick in 0.. {
