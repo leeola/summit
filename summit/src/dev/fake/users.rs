@@ -115,9 +115,9 @@ impl FakeUsers {
     // NIT: Make this runtime move..? I don't want it to start twice, iirc it was shared to pass
     // state to the web server for remote control, but a shutdown channel is probably all that's
     // necesary.
-    pub async fn start_runtime(&self, tick_rate_millis: u64) -> anyhow::Result<()> {
-        info!(tick_rate_millis, "starting fake user runtime");
-        let tick_rate = Duration::from_millis(tick_rate_millis);
+    pub async fn start_runtime(&self, tick_rate_ms: u64) -> anyhow::Result<()> {
+        info!(tick_rate_ms, "starting fake user runtime");
+        let tick_rate = Duration::from_millis(tick_rate_ms);
         let mut prev_tick = Instant::now();
         for tick in 0.. {
             let res: anyhow::Result<()> = async {
