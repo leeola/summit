@@ -22,21 +22,28 @@ pub struct FakeUserInitConfig {
     #[arg(long, default_value_t = 1)]
     pub fake_count: u16,
     /// The delay on startup user creation, if [`Self::fake_user_startup_count`] is > 0.
-    #[arg(long, default_value_t = 0)]
+    ///
+    /// In milliseconds.
+    #[arg(long = "fake-start-delay", default_value_t = 0)]
     pub start_on_init_delay_ms: u64,
     /// The maximum delay in seconds that fake users will end up with.
-    #[arg(long, default_value_t = 60)]
+    ///
+    /// In seconds.
+    //
+    // NIT: Convert to millis. One standout is annoying.
+    #[arg(long = "fake-user-delay-range-max", default_value_t = 60)]
     pub rate_of_actions_secs_max: u64,
-    /// Advance the ticks of any active fake users at startup. This can be delayed via
-    /// [`Self::start_on_init_delay_ms`].
-    #[arg(long, default_value_t = 0)]
+    /// Fast Forward the ticks of any active fake users at startup. This can be delayed via
+    /// `--fake-start-delay`.
+    #[arg(long = "fake-ff", default_value_t = 0)]
     pub ff_ticks: u64,
-    /// In milliseconds, interval duration each tick must take to run, at a minimum. Ticks may
-    /// exceed this time.
-    #[arg(long, default_value_t = 2500)]
+    /// interval duration each tick must take to run, at a minimum. Ticks may exceed this time.
+    ///
+    /// In milliseconds.
+    #[arg(long = "fake-tick-dur", default_value_t = 2500)]
     pub tick_dur: u64,
-    /// Don't start the fake user runtime, but users may still be created or advanced.
-    #[arg(long)]
+    /// Don't start the fake user runtime, but users may still be created or fast forwarded.
+    #[arg(long = "fake-dont-run")]
     pub dont_start_runtime: bool,
 }
 impl FakeUserInitConfig {
