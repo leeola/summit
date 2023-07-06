@@ -48,6 +48,31 @@ body > footer nav li {
 }
 
 /* ============================ */
+/* =========== FONT =========== */
+/* ============================ */
+
+body {
+	/*
+		NIT: I'd love a series of system native fonts, ala modern-font-stacks[1] that covered some nice
+		styling. Alas, i do not know fonts, and the best i can discern from researching is that the
+		landscape is chaotic at best. Even with modern-font-stacks recommendations most of them did
+		nothing for me on Linux.
+
+		I think the CSSWG is addressing this[2][3]. So for now i'm just going to favor this with a
+		system-ui and sans-serif fallback. Someone font savvy can propose some improvements. 
+
+		[1]: https://github.com/system-fonts/modern-font-stacks
+		[2]: https://github.com/w3c/csswg-drafts/issues/4107
+		[3]: https://drafts.csswg.org/css-fonts-4/#system-ui-def
+	*/
+	font-family: ui-sans-serif, system-ui, sans-serif;
+}
+body > header {
+	/* See font NIT in body style. */
+	font-family: ui-monospaced, monospace, system-ui, sans-serif;
+}
+
+/* ============================ */
 /* ========== STYLE =========== */
 /* ============================ */
 
@@ -57,6 +82,11 @@ body {
 	/* padding: 0 10px; */
 	line-height: 1.6;
 	font-size: 18px;
+}
+/* Anti aliasing? :shrug: */
+html {
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 }
 h1,h2,h3 {
 	line-height: 1.2;
@@ -116,4 +146,3 @@ color-text-inverted
 		--color-text-highlight: hsl(210, 0%, 100%);
 		--color-text-brand: hsl(210, 30%, 80%);
 }
-
