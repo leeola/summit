@@ -1,5 +1,7 @@
 <header>
-	<h1>Site Name</h1>
+	<h1>
+		summ.dev<span class="type">s</span><span>foo</span>
+	</h1>
 	<nav class="nav">
 		<ul>
 			<li>Home</li>
