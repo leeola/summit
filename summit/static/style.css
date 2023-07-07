@@ -6,9 +6,12 @@ body {
 	max-width: 90rem;
 	padding: 0;
 	margin: 0 auto;
+	display: grid;
+	grid-template-columns: 1fr 7fr 1fr;
 }
 body > header {
 	width: 100%;
+	grid-column: span 3;
 	display: grid;
 	gap: 1rem;
 	grid-template-columns: repeat(3, 1fr);
@@ -28,12 +31,17 @@ body > header nav li {
 	list-style-type: none;
 }
 body > main {
+	grid-column: 2;
 	display: grid;
 	gap: 1rem;
 	grid-template-columns: repeat(9, 1fr);
 }
 body > main > * {
 	grid-column: 2 / -2;
+}
+body > footer {
+	grid-column: 2;
+	grid-row: 3;
 }
 body > footer ul {
 	display: flex;
