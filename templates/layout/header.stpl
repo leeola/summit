@@ -1,21 +1,14 @@
 <header>
-	<h1>
-		summ.dev<span class="type">s</span><span>foo</span>
-	</h1>
+	<h1>summ.dev</h1><h2><span class="title-path">s</span><span class="title-path">foo</span></h2>
 	<nav class="nav">
 		<ul>
-			<li>Home</li>
-			<li>Foo</li>
-			<li>Bar</li>
+			<li>Foo[1]</li>
+			<li>Bar[2]</li>
 		</ul>
 	</nav>
 	<nav class="account">
 		<ul>
-			<li>Register</li>
-			<li>Login</li>
-			<li>Me</li>
-			<li>Settings</li>
-			<li>Logout</li>
+			<li>Username[3]</li>
 		</ul>
 	</nav>
 </header>
